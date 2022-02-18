@@ -1,10 +1,12 @@
 /*
- * Created with @iobroker/create-adapter v2.1.0
+ * Created with @iobroker/create-adapter v2.0.2
  */
 
 // The adapter-core module gives you access to the core ioBroker functions
 // you need to create an adapter
 import * as utils from "@iobroker/adapter-core";
+import { TibberQuery, IConfig } from "tibber-api";
+import { TibberPulse } from "./lib/tibberPulse";
 
 // Load your modules here, e.g.:
 // import * as fs from "fs";
@@ -28,55 +30,330 @@ class Tibberconnect extends utils.Adapter {
 	private async onReady(): Promise<void> {
 		// Initialize your adapter here
 
-		// The adapters config (in the instance object everything under the attribute "native") is accessible via
-		// this.config:
-		this.log.info("config option1: " + this.config.option1);
-		this.log.info("config option2: " + this.config.option2);
+		// Reset the connection indicator during startup
+		this.setState("info.connection", false, true);
 
-		/*
-		For every state in the system there has to be also an object of type state
-		Here a simple template for a boolean variable named "testVariable"
-		Because every adapter instance uses its own unique namespace variable names can't collide with other adapters variables
-		*/
-		await this.setObjectNotExistsAsync("testVariable", {
-			type: "state",
-			common: {
-				name: "testVariable",
-				type: "boolean",
-				role: "indicator",
-				read: true,
-				write: true,
-			},
-			native: {},
-		});
+		if (this.config.TibberAPIToken == null) {
+			// No Token defined in configuration
+			this.log.warn("Missing API Token - please check configuration");
+		} else {
+			// Config object needed when instantiating TibberQuery
+			const tibberConfig: IConfig = {
+				active: true,
+				apiEndpoint: {
+					apiKey: this.config.TibberAPIToken, // Demo token
+					feedUrl: "wss://api.tibber.com/v1-beta/gql/subscriptions",
+					queryUrl: "https://api.tibber.com/v1-beta/gql",
+				},
+				timestamp: true,
+				power: true,
+			};
 
-		// In order to get state updates, you need to subscribe to them. The following line adds a subscription for our variable we have created above.
-		this.subscribeStates("testVariable");
-		// You can also add a subscription for multiple states. The following line watches all states starting with "lights."
-		// this.subscribeStates("lights.*");
-		// Or, if you really must, you can also watch all states. Don't do this if you don't need to. Otherwise this will cause a lot of unnecessary load on the system:
-		// this.subscribeStates("*");
+			const tibberQuery: TibberQuery = new TibberQuery(tibberConfig);
 
-		/*
-			setState examples
-			you will notice that each setState will cause the stateChange event to fire (because of above subscribeStates cmd)
-		*/
-		// the variable testVariable is set to true as command (ack=false)
-		await this.setStateAsync("testVariable", true);
+			const result = await tibberQuery.getHomes();
+			const HomeName = "Homes";
 
-		// same thing, but the value is flagged "ack"
-		// ack should be always set to true if the value is received from or acknowledged from the target system
-		await this.setStateAsync("testVariable", { val: true, ack: true });
+			for (const HomeIndex in result) {
+				const currentHome = result[HomeIndex];
+				const HomeId = currentHome.id;
+				// Set HomeId in Config for feed
+				tibberConfig.homeId = HomeId;
+				// Fetch main data
+				this.checkAndSetStateStringFromAPI(HomeName + "." + HomeId + ".General.Id", currentHome.id, "Id");
+				this.checkAndSetStateStringFromAPI(
+					HomeName + "." + HomeId + ".General.Timezone",
+					currentHome.timeZone,
+					"Timezone",
+				);
+				this.checkAndSetStateStringFromAPI(
+					HomeName + "." + HomeId + ".General.NameInApp",
+					currentHome.appNickname,
+					"NameInApp",
+				);
+				this.checkAndSetStateStringFromAPI(
+					HomeName + "." + HomeId + ".General.AvatarInApp",
+					currentHome.appAvatar,
+					"AvatarInApp",
+				);
+				this.checkAndSetStateNumberFromAPI(HomeName + "." + HomeId + ".General.Size", currentHome.size, "Size");
+				this.checkAndSetStateStringFromAPI(HomeName + "." + HomeId + ".General.Type", currentHome.type, "Type");
+				this.checkAndSetStateNumberFromAPI(
+					HomeName + "." + HomeId + ".General.NumberOfResidents",
+					currentHome.numberOfResidents,
+					"NumberOfResidents",
+				);
+				this.checkAndSetStateNumberFromAPI(
+					HomeName + "." + HomeId + ".General.MainFuseSize",
+					currentHome.mainFuseSize,
+					"MainFuseSize",
+				);
+				this.checkAndSetStateStringFromAPI(
+					HomeName + "." + HomeId + ".General.NumberOfResidents",
+					currentHome.primaryHeatingSource,
+					"NumberOfResidents",
+				);
+				this.setStateBoolFromAPI(
+					HomeName + "." + HomeId + ".General.hasVentilationSystem",
+					currentHome.hasVentilationSystem,
+					"hasVentilationSystem",
+				);
 
-		// same thing, but the state is deleted after 30s (getState will return null afterwards)
-		await this.setStateAsync("testVariable", { val: true, ack: true, expire: 30 });
+				// Fetch adress data
+				this.checkAndSetStateStringFromAPI(
+					HomeName + "." + HomeId + ".Address.Address1",
+					currentHome.address.address1,
+					"Address1",
+				);
+				this.checkAndSetStateStringFromAPI(
+					HomeName + "." + HomeId + ".Address.Address2",
+					currentHome.address.address2,
+					"Address2",
+				);
+				this.checkAndSetStateStringFromAPI(
+					HomeName + "." + HomeId + ".Address.Address3",
+					currentHome.address.address3,
+					"Address3",
+				);
+				this.checkAndSetStateStringFromAPI(
+					HomeName + "." + HomeId + ".Address.PostalCode",
+					currentHome.address.postalCode,
+					"PostalCode",
+				);
+				this.checkAndSetStateStringFromAPI(
+					HomeName + "." + HomeId + ".Address.City",
+					currentHome.address.city,
+					"City",
+				);
+				this.checkAndSetStateStringFromAPI(
+					HomeName + "." + HomeId + ".Address.Country",
+					currentHome.address.country,
+					"Country",
+				);
+				this.checkAndSetStateStringFromAPI(
+					HomeName + "." + HomeId + ".Address.Latitude",
+					currentHome.address.latitude,
+					"Latitude",
+				);
+				this.checkAndSetStateStringFromAPI(
+					HomeName + "." + HomeId + ".Address.Longitude",
+					currentHome.address.longitude,
+					"Longitude",
+				);
 
-		// examples for the checkPassword/checkGroup functions
-		let result = await this.checkPasswordAsync("admin", "iobroker");
-		this.log.info("check user admin pw iobroker: " + result);
+				// Fetch owner data
+				this.checkAndSetStateStringFromAPI(HomeName + "." + HomeId + ".Owner.Id", currentHome.owner.id, "Id");
+				this.checkAndSetStateStringFromAPI(
+					HomeName + "." + HomeId + ".Owner.Firstname",
+					currentHome.owner.firstName,
+					"Firstname",
+				);
+				this.checkAndSetStateStringFromAPI(
+					HomeName + "." + HomeId + ".Owner.Name",
+					currentHome.owner.name,
+					"Name",
+				);
+				this.checkAndSetStateStringFromAPI(
+					HomeName + "." + HomeId + ".Owner.MiddleName",
+					currentHome.owner.middleName,
+					"Name",
+				);
+				this.checkAndSetStateStringFromAPI(
+					HomeName + "." + HomeId + ".Owner.LastName",
+					currentHome.owner.lastName,
+					"Lastname",
+				);
+				this.setStateBoolFromAPI(
+					HomeName + "." + HomeId + ".Owner.IsCompany",
+					currentHome.owner.isCompany,
+					"IsCompany",
+				);
+				this.checkAndSetStateStringFromAPI(
+					HomeName + "." + HomeId + ".Owner.OrganizationNo",
+					currentHome.owner.organizationNo,
+					"OrganizationNo",
+				);
+				this.checkAndSetStateStringFromAPI(
+					HomeName + "." + HomeId + ".Owner.Language",
+					currentHome.owner.language,
+					"Language",
+				);
+				this.checkAndSetStateStringFromAPI(
+					HomeName + "." + HomeId + ".Owner.Language",
+					currentHome.owner.language,
+					"Language",
+				);
+				this.checkAndSetStateStringFromAPI(
+					HomeName + "." + HomeId + ".Owner.ContactInfo.Email",
+					currentHome.owner.contactInfo.email,
+					"E-Mail",
+				);
+				this.checkAndSetStateStringFromAPI(
+					HomeName + "." + HomeId + ".Owner.ContactInfo.Mobile",
+					currentHome.owner.contactInfo.mobile,
+					"Mobile",
+				);
 
-		result = await this.checkGroupAsync("admin", "admin");
-		this.log.info("check group user admin group admin: " + result);
+				// Fetch meteringPoint data
+				this.checkAndSetStateStringFromAPI(
+					HomeName + "." + HomeId + ".MeteringPointData.ConsumptionEan",
+					currentHome.meteringPointData.consumptionEan,
+					"ConsumptionEan",
+				);
+				this.checkAndSetStateStringFromAPI(
+					HomeName + "." + HomeId + ".MeteringPointData.GridCompany",
+					currentHome.meteringPointData.gridCompany,
+					"GridCompany",
+				);
+				this.checkAndSetStateStringFromAPI(
+					HomeName + "." + HomeId + ".MeteringPointData.GridAreaCode",
+					currentHome.meteringPointData.gridAreaCode,
+					"GridAreaCode",
+				);
+				this.checkAndSetStateStringFromAPI(
+					HomeName + "." + HomeId + ".MeteringPointData.PriceAreaCode",
+					currentHome.meteringPointData.priceAreaCode,
+					"priceAreaCode",
+				);
+				// this.checkAndSetStateStringFromAPI(HomeName + "." + HomeId + ".MeteringPointData.ProductionEan", currentHome.meteringPointData.productionEan, "ProductionEan");
+				this.checkAndSetStateStringFromAPI(
+					HomeName + "." + HomeId + ".MeteringPointData.EnergyTaxType",
+					currentHome.meteringPointData.energyTaxType,
+					"EnergyTaxType",
+				);
+				this.checkAndSetStateStringFromAPI(
+					HomeName + "." + HomeId + ".MeteringPointData.VatType",
+					currentHome.meteringPointData.vatType,
+					"VatType",
+				);
+				this.checkAndSetStateNumberFromAPI(
+					HomeName + "." + HomeId + ".MeteringPointData.EstimatedAnnualConsumption",
+					currentHome.meteringPointData.estimatedAnnualConsumption,
+					"EstimatedAnnualConsumption",
+				);
+
+				// Fetch feature data
+				this.setStateBoolFromAPI(
+					HomeName + "." + HomeId + ".Features.RealTimeConsumptionEnabled",
+					currentHome.features.realTimeConsumptionEnabled,
+					"RealTimeConsumptionEnabled",
+				);
+
+				// Get current Energy Price from Tribber
+				const resultEnergy = await tibberQuery.getCurrentEnergyPrice(HomeId);
+
+				// Fetch currentEnergyPrice for current home
+				this.checkAndSetStateNumberFromAPI(
+					HomeName + "." + HomeId + ".CurrentEnergyPrice.TotalCost",
+					resultEnergy.total,
+					"Total Cost",
+				);
+				this.checkAndSetStateNumberFromAPI(
+					HomeName + "." + HomeId + ".CurrentEnergyPrice.EnergyCost",
+					resultEnergy.energy,
+					"Energy Cost",
+				);
+				this.checkAndSetStateNumberFromAPI(
+					HomeName + "." + HomeId + ".CurrentEnergyPrice.Tax",
+					resultEnergy.tax,
+					"Tax",
+				);
+				this.checkAndSetStateStringFromAPI(
+					HomeName + "." + HomeId + ".CurrentEnergyPrice.StartsAt",
+					resultEnergy.startsAt,
+					"StartsAt",
+				);
+				this.checkAndSetStateStringFromAPI(
+					HomeName + "." + HomeId + ".CurrentEnergyPrice.Level",
+					resultEnergy.level,
+					"Level",
+				);
+				// this.checkAndSetStateStringFromAPI(HomeName + "." + HomeId + ".CurrentEnergyPrice.Level", resultEnergy.currency, "Currency");
+
+				// Get todays energy prices
+				const resultTodayEnergy = await tibberQuery.getTodaysEnergyPrices(HomeId);
+
+				for (const TodayEnergyIndex in resultTodayEnergy) {
+					const currentTodayEnergy = resultTodayEnergy[TodayEnergyIndex];
+					const StartsAt = new Date(currentTodayEnergy.startsAt);
+					const StartsAtTime = StartsAt.getHours();
+
+					// Fetch currentEnergyPrice for current home
+					this.checkAndSetStateNumberFromAPI(
+						HomeName + "." + HomeId + ".TodayEnergyPrice." + StartsAtTime + ".TotalCost",
+						currentTodayEnergy.total,
+						"Total Cost",
+					);
+					this.checkAndSetStateNumberFromAPI(
+						HomeName + "." + HomeId + ".TodayEnergyPrice." + StartsAtTime + ".EnergyCost",
+						currentTodayEnergy.energy,
+						"Energy Cost",
+					);
+					this.checkAndSetStateNumberFromAPI(
+						HomeName + "." + HomeId + ".TodayEnergyPrice." + StartsAtTime + ".Tax",
+						currentTodayEnergy.tax,
+						"Tax",
+					);
+					this.checkAndSetStateStringFromAPI(
+						HomeName + "." + HomeId + ".TodayEnergyPrice." + StartsAtTime + ".StartsAt",
+						currentTodayEnergy.startsAt,
+						"StartsAt",
+					);
+					this.checkAndSetStateStringFromAPI(
+						HomeName + "." + HomeId + ".TodayEnergyPrice." + StartsAtTime + ".Level",
+						currentTodayEnergy.level,
+						"Level",
+					);
+					// this.checkAndSetStateStringFromAPI(HomeName + "." + HomeId + ".TodayEnergyPrice." + TodayEnergyIndex + ".Currency", currentTodayEnergy.currency, "Currency");
+				}
+
+				// Get tomorrows energy prices
+				const resultTomorrowsEnergy = await tibberQuery.getTomorrowsEnergyPrices(HomeId);
+
+				for (const TomorrowsEnergyIndex in resultTomorrowsEnergy) {
+					const currentTomorrowsEnergy = resultTomorrowsEnergy[TomorrowsEnergyIndex];
+					const StartsAt = new Date(currentTomorrowsEnergy.startsAt);
+					const StartsAtTime = StartsAt.getHours();
+
+					// Fetch currentEnergyPrice for current home
+					this.checkAndSetStateNumberFromAPI(
+						HomeName + "." + HomeId + ".TomorrowsEnergyPrice." + StartsAtTime + ".TotalCost",
+						currentTomorrowsEnergy.total,
+						"Total Cost",
+					);
+					this.checkAndSetStateNumberFromAPI(
+						HomeName + "." + HomeId + ".TomorrowsEnergyPrice." + StartsAtTime + ".EnergyCost",
+						currentTomorrowsEnergy.energy,
+						"Energy Cost",
+					);
+					this.checkAndSetStateNumberFromAPI(
+						HomeName + "." + HomeId + ".TomorrowsEnergyPrice." + StartsAtTime + ".Tax",
+						currentTomorrowsEnergy.tax,
+						"Tax",
+					);
+					this.checkAndSetStateStringFromAPI(
+						HomeName + "." + HomeId + ".TomorrowsEnergyPrice." + StartsAtTime + ".StartsAt",
+						currentTomorrowsEnergy.startsAt,
+						"StartsAt",
+					);
+					this.checkAndSetStateStringFromAPI(
+						HomeName + "." + HomeId + ".TomorrowsEnergyPrice." + StartsAtTime + ".Level",
+						currentTomorrowsEnergy.level,
+						"Level",
+					);
+					// this.checkAndSetStateStringFromAPI(HomeName + "." + HomeId + ".TomorrowsEnergyPrice." + StartsAtTime + ".Currency", currentTomorrowsEnergy.currency, "Currency");
+				}
+
+				if (this.config.PulseActive) {
+					try {
+						const tibberPulse = new TibberPulse(tibberConfig, this);
+						tibberPulse.ConnectPulseStream();
+					} catch (e) {
+						this.log.warn((e as Error).message);
+					}
+				}
+			}
+		}
 	}
 
 	/**
@@ -96,21 +373,6 @@ class Tibberconnect extends utils.Adapter {
 		}
 	}
 
-	// If you need to react to object changes, uncomment the following block and the corresponding line in the constructor.
-	// You also need to subscribe to the objects with `this.subscribeObjects`, similar to `this.subscribeStates`.
-	// /**
-	//  * Is called if a subscribed object changes
-	//  */
-	// private onObjectChange(id: string, obj: ioBroker.Object | null | undefined): void {
-	// 	if (obj) {
-	// 		// The object was changed
-	// 		this.log.info(`object ${id} changed: ${JSON.stringify(obj)}`);
-	// 	} else {
-	// 		// The object was deleted
-	// 		this.log.info(`object ${id} deleted`);
-	// 	}
-	// }
-
 	/**
 	 * Is called if a subscribed state changes
 	 */
@@ -124,22 +386,57 @@ class Tibberconnect extends utils.Adapter {
 		}
 	}
 
-	// If you need to accept messages in your adapter, uncomment the following block and the corresponding line in the constructor.
-	// /**
-	//  * Some message was sent to this instance over message box. Used by email, pushover, text2speech, ...
-	//  * Using this method requires "common.messagebox" property to be set to true in io-package.json
-	//  */
-	// private onMessage(obj: ioBroker.Message): void {
-	// 	if (typeof obj === "object" && obj.message) {
-	// 		if (obj.command === "send") {
-	// 			// e.g. send email or pushover or whatever
-	// 			this.log.info("send command");
+	private async checkAndSetStateStringFromAPI(name: string, value: string, displayName: string): Promise<void> {
+		if (value) {
+			await this.setObjectNotExistsAsync(name, {
+				type: "state",
+				common: {
+					name: displayName,
+					type: "string",
+					role: "string",
+					read: true,
+					write: true,
+				},
+				native: {},
+			});
 
-	// 			// Send response in callback if required
-	// 			if (obj.callback) this.sendTo(obj.from, obj.command, "Message received", obj.callback);
-	// 		}
-	// 	}
-	// }
+			await this.setStateAsync(name, value);
+		}
+	}
+
+	private async checkAndSetStateNumberFromAPI(name: string, value: number, displayName: string): Promise<void> {
+		if (value) {
+			await this.setObjectNotExistsAsync(name, {
+				type: "state",
+				common: {
+					name: displayName,
+					type: "number",
+					role: "number",
+					read: true,
+					write: true,
+				},
+				native: {},
+			});
+
+			await this.setStateAsync(name, value);
+		}
+	}
+
+	private async setStateBoolFromAPI(name: string, value: boolean, displayName: string): Promise<void> {
+		await this.setObjectNotExistsAsync(name, {
+			type: "state",
+			common: {
+				name: displayName,
+				type: "boolean",
+				role: "boolean",
+				read: true,
+				write: true,
+			},
+			native: {},
+		});
+
+		await this.setStateAsync(name, value);
+	}
 }
 
 if (require.main !== module) {

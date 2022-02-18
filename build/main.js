@@ -1,89 +1,251 @@
-var __create = Object.create;
-var __defProp = Object.defineProperty;
-var __defProps = Object.defineProperties;
-var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
-var __getOwnPropDescs = Object.getOwnPropertyDescriptors;
-var __getOwnPropNames = Object.getOwnPropertyNames;
-var __getOwnPropSymbols = Object.getOwnPropertySymbols;
-var __getProtoOf = Object.getPrototypeOf;
-var __hasOwnProp = Object.prototype.hasOwnProperty;
-var __propIsEnum = Object.prototype.propertyIsEnumerable;
-var __defNormalProp = (obj, key, value) => key in obj ? __defProp(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
-var __spreadValues = (a, b) => {
-  for (var prop in b || (b = {}))
-    if (__hasOwnProp.call(b, prop))
-      __defNormalProp(a, prop, b[prop]);
-  if (__getOwnPropSymbols)
-    for (var prop of __getOwnPropSymbols(b)) {
-      if (__propIsEnum.call(b, prop))
-        __defNormalProp(a, prop, b[prop]);
-    }
-  return a;
+"use strict";
+/*
+ * Created with @iobroker/create-adapter v2.0.2
+ */
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
 };
-var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
-var __markAsModule = (target) => __defProp(target, "__esModule", { value: true });
-var __reExport = (target, module2, copyDefault, desc) => {
-  if (module2 && typeof module2 === "object" || typeof module2 === "function") {
-    for (let key of __getOwnPropNames(module2))
-      if (!__hasOwnProp.call(target, key) && (copyDefault || key !== "default"))
-        __defProp(target, key, { get: () => module2[key], enumerable: !(desc = __getOwnPropDesc(module2, key)) || desc.enumerable });
-  }
-  return target;
-};
-var __toESM = (module2, isNodeMode) => {
-  return __reExport(__markAsModule(__defProp(module2 != null ? __create(__getProtoOf(module2)) : {}, "default", !isNodeMode && module2 && module2.__esModule ? { get: () => module2.default, enumerable: true } : { value: module2, enumerable: true })), module2);
-};
-var utils = __toESM(require("@iobroker/adapter-core"));
+Object.defineProperty(exports, "__esModule", { value: true });
+// The adapter-core module gives you access to the core ioBroker functions
+// you need to create an adapter
+const utils = __importStar(require("@iobroker/adapter-core"));
+const tibber_api_1 = require("tibber-api");
+const tibberPulse_1 = require("./lib/tibberPulse");
+// Load your modules here, e.g.:
+// import * as fs from "fs";
 class Tibberconnect extends utils.Adapter {
-  constructor(options = {}) {
-    super(__spreadProps(__spreadValues({}, options), {
-      name: "tibberconnect"
-    }));
-    this.on("ready", this.onReady.bind(this));
-    this.on("stateChange", this.onStateChange.bind(this));
-    this.on("unload", this.onUnload.bind(this));
-  }
-  async onReady() {
-    this.log.info("config option1: " + this.config.option1);
-    this.log.info("config option2: " + this.config.option2);
-    await this.setObjectNotExistsAsync("testVariable", {
-      type: "state",
-      common: {
-        name: "testVariable",
-        type: "boolean",
-        role: "indicator",
-        read: true,
-        write: true
-      },
-      native: {}
-    });
-    this.subscribeStates("testVariable");
-    await this.setStateAsync("testVariable", true);
-    await this.setStateAsync("testVariable", { val: true, ack: true });
-    await this.setStateAsync("testVariable", { val: true, ack: true, expire: 30 });
-    let result = await this.checkPasswordAsync("admin", "iobroker");
-    this.log.info("check user admin pw iobroker: " + result);
-    result = await this.checkGroupAsync("admin", "admin");
-    this.log.info("check group user admin group admin: " + result);
-  }
-  onUnload(callback) {
-    try {
-      callback();
-    } catch (e) {
-      callback();
+    constructor(options = {}) {
+        super({
+            ...options,
+            name: "tibberconnect",
+        });
+        this.on("ready", this.onReady.bind(this));
+        this.on("stateChange", this.onStateChange.bind(this));
+        // this.on("objectChange", this.onObjectChange.bind(this));
+        // this.on("message", this.onMessage.bind(this));
+        this.on("unload", this.onUnload.bind(this));
     }
-  }
-  onStateChange(id, state) {
-    if (state) {
-      this.log.info(`state ${id} changed: ${state.val} (ack = ${state.ack})`);
-    } else {
-      this.log.info(`state ${id} deleted`);
+    /**
+     * Is called when databases are connected and adapter received configuration.
+     */
+    async onReady() {
+        // Initialize your adapter here
+        // Reset the connection indicator during startup
+        this.setState("info.connection", false, true);
+        if (this.config.TibberAPIToken == null) {
+            // No Token defined in configuration
+            this.log.warn("Missing API Token - please check configuration");
+        }
+        else {
+            // Config object needed when instantiating TibberQuery
+            const tibberConfig = {
+                active: true,
+                apiEndpoint: {
+                    apiKey: this.config.TibberAPIToken,
+                    feedUrl: "wss://api.tibber.com/v1-beta/gql/subscriptions",
+                    queryUrl: "https://api.tibber.com/v1-beta/gql",
+                },
+                timestamp: true,
+                power: true,
+            };
+            const tibberQuery = new tibber_api_1.TibberQuery(tibberConfig);
+            const result = await tibberQuery.getHomes();
+            const HomeName = "Homes";
+            for (const HomeIndex in result) {
+                const currentHome = result[HomeIndex];
+                const HomeId = currentHome.id;
+                // Set HomeId in Config for feed
+                tibberConfig.homeId = HomeId;
+                // Fetch main data
+                this.checkAndSetStateStringFromAPI(HomeName + "." + HomeId + ".General.Id", currentHome.id, "Id");
+                this.checkAndSetStateStringFromAPI(HomeName + "." + HomeId + ".General.Timezone", currentHome.timeZone, "Timezone");
+                this.checkAndSetStateStringFromAPI(HomeName + "." + HomeId + ".General.NameInApp", currentHome.appNickname, "NameInApp");
+                this.checkAndSetStateStringFromAPI(HomeName + "." + HomeId + ".General.AvatarInApp", currentHome.appAvatar, "AvatarInApp");
+                this.checkAndSetStateNumberFromAPI(HomeName + "." + HomeId + ".General.Size", currentHome.size, "Size");
+                this.checkAndSetStateStringFromAPI(HomeName + "." + HomeId + ".General.Type", currentHome.type, "Type");
+                this.checkAndSetStateNumberFromAPI(HomeName + "." + HomeId + ".General.NumberOfResidents", currentHome.numberOfResidents, "NumberOfResidents");
+                this.checkAndSetStateNumberFromAPI(HomeName + "." + HomeId + ".General.MainFuseSize", currentHome.mainFuseSize, "MainFuseSize");
+                this.checkAndSetStateStringFromAPI(HomeName + "." + HomeId + ".General.NumberOfResidents", currentHome.primaryHeatingSource, "NumberOfResidents");
+                this.setStateBoolFromAPI(HomeName + "." + HomeId + ".General.hasVentilationSystem", currentHome.hasVentilationSystem, "hasVentilationSystem");
+                // Fetch adress data
+                this.checkAndSetStateStringFromAPI(HomeName + "." + HomeId + ".Address.Address1", currentHome.address.address1, "Address1");
+                this.checkAndSetStateStringFromAPI(HomeName + "." + HomeId + ".Address.Address2", currentHome.address.address2, "Address2");
+                this.checkAndSetStateStringFromAPI(HomeName + "." + HomeId + ".Address.Address3", currentHome.address.address3, "Address3");
+                this.checkAndSetStateStringFromAPI(HomeName + "." + HomeId + ".Address.PostalCode", currentHome.address.postalCode, "PostalCode");
+                this.checkAndSetStateStringFromAPI(HomeName + "." + HomeId + ".Address.City", currentHome.address.city, "City");
+                this.checkAndSetStateStringFromAPI(HomeName + "." + HomeId + ".Address.Country", currentHome.address.country, "Country");
+                this.checkAndSetStateStringFromAPI(HomeName + "." + HomeId + ".Address.Latitude", currentHome.address.latitude, "Latitude");
+                this.checkAndSetStateStringFromAPI(HomeName + "." + HomeId + ".Address.Longitude", currentHome.address.longitude, "Longitude");
+                // Fetch owner data
+                this.checkAndSetStateStringFromAPI(HomeName + "." + HomeId + ".Owner.Id", currentHome.owner.id, "Id");
+                this.checkAndSetStateStringFromAPI(HomeName + "." + HomeId + ".Owner.Firstname", currentHome.owner.firstName, "Firstname");
+                this.checkAndSetStateStringFromAPI(HomeName + "." + HomeId + ".Owner.Name", currentHome.owner.name, "Name");
+                this.checkAndSetStateStringFromAPI(HomeName + "." + HomeId + ".Owner.MiddleName", currentHome.owner.middleName, "Name");
+                this.checkAndSetStateStringFromAPI(HomeName + "." + HomeId + ".Owner.LastName", currentHome.owner.lastName, "Lastname");
+                this.setStateBoolFromAPI(HomeName + "." + HomeId + ".Owner.IsCompany", currentHome.owner.isCompany, "IsCompany");
+                this.checkAndSetStateStringFromAPI(HomeName + "." + HomeId + ".Owner.OrganizationNo", currentHome.owner.organizationNo, "OrganizationNo");
+                this.checkAndSetStateStringFromAPI(HomeName + "." + HomeId + ".Owner.Language", currentHome.owner.language, "Language");
+                this.checkAndSetStateStringFromAPI(HomeName + "." + HomeId + ".Owner.Language", currentHome.owner.language, "Language");
+                this.checkAndSetStateStringFromAPI(HomeName + "." + HomeId + ".Owner.ContactInfo.Email", currentHome.owner.contactInfo.email, "E-Mail");
+                this.checkAndSetStateStringFromAPI(HomeName + "." + HomeId + ".Owner.ContactInfo.Mobile", currentHome.owner.contactInfo.mobile, "Mobile");
+                // Fetch meteringPoint data
+                this.checkAndSetStateStringFromAPI(HomeName + "." + HomeId + ".MeteringPointData.ConsumptionEan", currentHome.meteringPointData.consumptionEan, "ConsumptionEan");
+                this.checkAndSetStateStringFromAPI(HomeName + "." + HomeId + ".MeteringPointData.GridCompany", currentHome.meteringPointData.gridCompany, "GridCompany");
+                this.checkAndSetStateStringFromAPI(HomeName + "." + HomeId + ".MeteringPointData.GridAreaCode", currentHome.meteringPointData.gridAreaCode, "GridAreaCode");
+                this.checkAndSetStateStringFromAPI(HomeName + "." + HomeId + ".MeteringPointData.PriceAreaCode", currentHome.meteringPointData.priceAreaCode, "priceAreaCode");
+                // this.checkAndSetStateStringFromAPI(HomeName + "." + HomeId + ".MeteringPointData.ProductionEan", currentHome.meteringPointData.productionEan, "ProductionEan");
+                this.checkAndSetStateStringFromAPI(HomeName + "." + HomeId + ".MeteringPointData.EnergyTaxType", currentHome.meteringPointData.energyTaxType, "EnergyTaxType");
+                this.checkAndSetStateStringFromAPI(HomeName + "." + HomeId + ".MeteringPointData.VatType", currentHome.meteringPointData.vatType, "VatType");
+                this.checkAndSetStateNumberFromAPI(HomeName + "." + HomeId + ".MeteringPointData.EstimatedAnnualConsumption", currentHome.meteringPointData.estimatedAnnualConsumption, "EstimatedAnnualConsumption");
+                // Fetch feature data
+                this.setStateBoolFromAPI(HomeName + "." + HomeId + ".Features.RealTimeConsumptionEnabled", currentHome.features.realTimeConsumptionEnabled, "RealTimeConsumptionEnabled");
+                // Get current Energy Price from Tribber
+                const resultEnergy = await tibberQuery.getCurrentEnergyPrice(HomeId);
+                // Fetch currentEnergyPrice for current home
+                this.checkAndSetStateNumberFromAPI(HomeName + "." + HomeId + ".CurrentEnergyPrice.TotalCost", resultEnergy.total, "Total Cost");
+                this.checkAndSetStateNumberFromAPI(HomeName + "." + HomeId + ".CurrentEnergyPrice.EnergyCost", resultEnergy.energy, "Energy Cost");
+                this.checkAndSetStateNumberFromAPI(HomeName + "." + HomeId + ".CurrentEnergyPrice.Tax", resultEnergy.tax, "Tax");
+                this.checkAndSetStateStringFromAPI(HomeName + "." + HomeId + ".CurrentEnergyPrice.StartsAt", resultEnergy.startsAt, "StartsAt");
+                this.checkAndSetStateStringFromAPI(HomeName + "." + HomeId + ".CurrentEnergyPrice.Level", resultEnergy.level, "Level");
+                // this.checkAndSetStateStringFromAPI(HomeName + "." + HomeId + ".CurrentEnergyPrice.Level", resultEnergy.currency, "Currency");
+                // Get todays energy prices
+                const resultTodayEnergy = await tibberQuery.getTodaysEnergyPrices(HomeId);
+                for (const TodayEnergyIndex in resultTodayEnergy) {
+                    const currentTodayEnergy = resultTodayEnergy[TodayEnergyIndex];
+                    const StartsAt = new Date(currentTodayEnergy.startsAt);
+                    const StartsAtTime = StartsAt.getHours();
+                    // Fetch currentEnergyPrice for current home
+                    this.checkAndSetStateNumberFromAPI(HomeName + "." + HomeId + ".TodayEnergyPrice." + StartsAtTime + ".TotalCost", currentTodayEnergy.total, "Total Cost");
+                    this.checkAndSetStateNumberFromAPI(HomeName + "." + HomeId + ".TodayEnergyPrice." + StartsAtTime + ".EnergyCost", currentTodayEnergy.energy, "Energy Cost");
+                    this.checkAndSetStateNumberFromAPI(HomeName + "." + HomeId + ".TodayEnergyPrice." + StartsAtTime + ".Tax", currentTodayEnergy.tax, "Tax");
+                    this.checkAndSetStateStringFromAPI(HomeName + "." + HomeId + ".TodayEnergyPrice." + StartsAtTime + ".StartsAt", currentTodayEnergy.startsAt, "StartsAt");
+                    this.checkAndSetStateStringFromAPI(HomeName + "." + HomeId + ".TodayEnergyPrice." + StartsAtTime + ".Level", currentTodayEnergy.level, "Level");
+                    // this.checkAndSetStateStringFromAPI(HomeName + "." + HomeId + ".TodayEnergyPrice." + TodayEnergyIndex + ".Currency", currentTodayEnergy.currency, "Currency");
+                }
+                // Get tomorrows energy prices
+                const resultTomorrowsEnergy = await tibberQuery.getTomorrowsEnergyPrices(HomeId);
+                for (const TomorrowsEnergyIndex in resultTomorrowsEnergy) {
+                    const currentTomorrowsEnergy = resultTomorrowsEnergy[TomorrowsEnergyIndex];
+                    const StartsAt = new Date(currentTomorrowsEnergy.startsAt);
+                    const StartsAtTime = StartsAt.getHours();
+                    // Fetch currentEnergyPrice for current home
+                    this.checkAndSetStateNumberFromAPI(HomeName + "." + HomeId + ".TomorrowsEnergyPrice." + StartsAtTime + ".TotalCost", currentTomorrowsEnergy.total, "Total Cost");
+                    this.checkAndSetStateNumberFromAPI(HomeName + "." + HomeId + ".TomorrowsEnergyPrice." + StartsAtTime + ".EnergyCost", currentTomorrowsEnergy.energy, "Energy Cost");
+                    this.checkAndSetStateNumberFromAPI(HomeName + "." + HomeId + ".TomorrowsEnergyPrice." + StartsAtTime + ".Tax", currentTomorrowsEnergy.tax, "Tax");
+                    this.checkAndSetStateStringFromAPI(HomeName + "." + HomeId + ".TomorrowsEnergyPrice." + StartsAtTime + ".StartsAt", currentTomorrowsEnergy.startsAt, "StartsAt");
+                    this.checkAndSetStateStringFromAPI(HomeName + "." + HomeId + ".TomorrowsEnergyPrice." + StartsAtTime + ".Level", currentTomorrowsEnergy.level, "Level");
+                    // this.checkAndSetStateStringFromAPI(HomeName + "." + HomeId + ".TomorrowsEnergyPrice." + StartsAtTime + ".Currency", currentTomorrowsEnergy.currency, "Currency");
+                }
+                if (this.config.PulseActive) {
+                    try {
+                        const tibberPulse = new tibberPulse_1.TibberPulse(tibberConfig, this);
+                        tibberPulse.ConnectPulseStream();
+                    }
+                    catch (e) {
+                        this.log.warn(e.message);
+                    }
+                }
+            }
+        }
     }
-  }
+    /**
+     * Is called when adapter shuts down - callback has to be called under any circumstances!
+     */
+    onUnload(callback) {
+        try {
+            // Here you must clear all timeouts or intervals that may still be active
+            // clearTimeout(timeout1);
+            // clearTimeout(timeout2);
+            // ...
+            // clearInterval(interval1);
+            callback();
+        }
+        catch (e) {
+            callback();
+        }
+    }
+    /**
+     * Is called if a subscribed state changes
+     */
+    onStateChange(id, state) {
+        if (state) {
+            // The state was changed
+            this.log.info(`state ${id} changed: ${state.val} (ack = ${state.ack})`);
+        }
+        else {
+            // The state was deleted
+            this.log.info(`state ${id} deleted`);
+        }
+    }
+    async checkAndSetStateStringFromAPI(name, value, displayName) {
+        if (value) {
+            await this.setObjectNotExistsAsync(name, {
+                type: "state",
+                common: {
+                    name: displayName,
+                    type: "string",
+                    role: "string",
+                    read: true,
+                    write: true,
+                },
+                native: {},
+            });
+            await this.setStateAsync(name, value);
+        }
+    }
+    async checkAndSetStateNumberFromAPI(name, value, displayName) {
+        if (value) {
+            await this.setObjectNotExistsAsync(name, {
+                type: "state",
+                common: {
+                    name: displayName,
+                    type: "number",
+                    role: "number",
+                    read: true,
+                    write: true,
+                },
+                native: {},
+            });
+            await this.setStateAsync(name, value);
+        }
+    }
+    async setStateBoolFromAPI(name, value, displayName) {
+        await this.setObjectNotExistsAsync(name, {
+            type: "state",
+            common: {
+                name: displayName,
+                type: "boolean",
+                role: "boolean",
+                read: true,
+                write: true,
+            },
+            native: {},
+        });
+        await this.setStateAsync(name, value);
+    }
 }
 if (require.main !== module) {
-  module.exports = (options) => new Tibberconnect(options);
-} else {
-  (() => new Tibberconnect())();
+    // Export the constructor in compact mode
+    module.exports = (options) => new Tibberconnect(options);
+}
+else {
+    // otherwise start the instance directly
+    (() => new Tibberconnect())();
 }
 //# sourceMappingURL=main.js.map
