@@ -1,0 +1,72 @@
+{
+	"common": {
+		"name": "tibberconnect",
+		"version": "0.0.1",
+		"news": {
+			"0.0.1": {
+				"en": "initial release",
+				"de": "Erstveröffentlichung",
+				"ru": "Начальная версия",
+				"pt": "lançamento inicial",
+				"nl": "Eerste uitgave",
+				"fr": "Première version",
+				"it": "Versione iniziale",
+				"es": "Versión inicial",
+				"pl": "Pierwsze wydanie",
+				"zh-cn": "首次出版"
+			}
+		},
+		"title": "Tibber Connect",
+		"titleLang": {
+			"en": "Tibber Connect",
+			"de": "Tibber Connect",
+			"ru": "Тиббер Коннект",
+			"pt": "Tibber Connect",
+			"nl": "Tibber Connect",
+			"fr": "Tibber Connect",
+			"it": "Tibber Connect",
+			"es": "Conectar Tibber",
+			"pl": "Połącz Tibbera",
+			"zh-cn": "提伯连接"
+		},
+		"desc": {
+			"en": "Connects tibber-api and ioBroker",
+			"de": "Verbindet tibber-api und ioBroker",
+			"ru": "Соединяет tibber-api и ioBroker",
+			"pt": "Conecta tibber-api e ioBroker",
+			"nl": "Verbindt tibber-api en ioBroker",
+			"fr": "Connecte tibber-api et ioBroker",
+			"it": "Collega tibber-api e ioBroker",
+			"es": "Conecta tibber-api e ioBroker",
+			"pl": "Łączy tibber-api i ioBroker",
+			"zh-cn": "连接 tibber-api 和 ioBroker"
+		},
+		"authors": ["Codibris <email@codibris.de>"],
+		"keywords": ["Strom", "Energieversorger", "Tibber", "Versorger"],
+		"license": "GPL-3.0",
+		"platform": "Javascript/Node.js",
+		"main": "build/main.js",
+		"icon": "tibberconnect.png",
+		"enabled": true,
+		"extIcon": "https://raw.githubusercontent.com/Codibris/ioBroker.tibberconnect/main/admin/tibberconnect.png",
+		"readme": "https://github.com/Codibris/ioBroker.tibberconnect/blob/main/README.md",
+		"loglevel": "info",
+		"mode": "daemon",
+		"type": "communication",
+		"compact": true,
+		"connectionType": "cloud",
+		"dataSource": "poll",
+		"materialize": true,
+		"dependencies": [
+			{
+				"js-controller": ">=2.0.0"
+			}
+		]
+	},
+	"native": {
+		"option1": true,
+		"option2": "42"
+	},
+	"objects": [],
+	"instanceObjects": []
+}
