@@ -1,6 +1,6 @@
 {
   "name": "iobroker.tibberconnect",
-  "version": "0.0.1",
+  "version": "0.0.0",
   "description": "connects tibber API and ioBroker",
   "author": {
     "name": "Codibris",
