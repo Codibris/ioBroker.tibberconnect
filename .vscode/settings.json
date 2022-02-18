@@ -3,6 +3,7 @@
 	"eslint.enable": true,
 	"editor.formatOnSave": true,
 	"editor.defaultFormatter": "esbenp.prettier-vscode",
+	"files.eol": "\n",
 	"[typescript]": {
 		"editor.codeActionsOnSave": {
 			"source.organizeImports": true
