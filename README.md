@@ -17,8 +17,7 @@
 connects tibber API and ioBroker
 
 ## Changelog
-
-### **WORK IN PROGRESS**
+### 0.0.1 (2022-02-18)
 
 Reading data from tibber API:
 
