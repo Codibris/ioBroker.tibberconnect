@@ -63,8 +63,6 @@ class Tibberconnect extends utils.Adapter {
                     feedUrl: "wss://api.tibber.com/v1-beta/gql/subscriptions",
                     queryUrl: "https://api.tibber.com/v1-beta/gql",
                 },
-                timestamp: true,
-                power: true,
             };
             // Now read all Data from API
             const tibberAPICaller = new tibberAPICaller_1.TibberAPICaller(tibberConfig, this);
@@ -80,13 +78,88 @@ class Tibberconnect extends utils.Adapter {
             }, 300000);
             this.intervallList.push(energyPriceCallIntervall);
             // If User uses TibberConfig - start connection
-            if (this.config.PulseActive) {
-                try {
-                    const tibberPulse = new tibberPulse_1.TibberPulse(tibberConfig, this);
-                    tibberPulse.ConnectPulseStream();
-                }
-                catch (e) {
-                    this.log.warn(e.message);
+            if (this.config.FeedActive) {
+                for (const index in this.homeIdList) {
+                    try {
+                        tibberConfig.homeId = this.homeIdList[index];
+                        // define fields for Datafeed
+                        tibberConfig.timestamp = true;
+                        tibberConfig.power = true;
+                        if (this.config.FeedConfigLastMeterConsumption) {
+                            tibberConfig.lastMeterConsumption = true;
+                        }
+                        if (this.config.FeedConfigAccumulatedConsumption) {
+                            tibberConfig.accumulatedConsumption = true;
+                        }
+                        if (this.config.FeedConfigAccumulatedProduction) {
+                            tibberConfig.accumulatedProduction = true;
+                        }
+                        if (this.config.FeedConfigAccumulatedConsumptionLastHour) {
+                            tibberConfig.accumulatedConsumptionLastHour = true;
+                        }
+                        if (this.config.FeedConfigAccumulatedProductionLastHour) {
+                            tibberConfig.accumulatedProductionLastHour = true;
+                        }
+                        if (this.config.FeedConfigAccumulatedCost) {
+                            tibberConfig.accumulatedCost = true;
+                        }
+                        if (this.config.FeedConfigAccumulatedCost) {
+                            tibberConfig.accumulatedReward = true;
+                        }
+                        if (this.config.FeedConfigCurrency) {
+                            tibberConfig.currency = true;
+                        }
+                        if (this.config.FeedConfigMinPower) {
+                            tibberConfig.minPower = true;
+                        }
+                        if (this.config.FeedConfigAveragePower) {
+                            tibberConfig.averagePower = true;
+                        }
+                        if (this.config.FeedConfigMaxPower) {
+                            tibberConfig.maxPower = true;
+                        }
+                        if (this.config.FeedConfigPowerProduction) {
+                            tibberConfig.powerProduction = true;
+                        }
+                        if (this.config.FeedConfigMinPowerProduction) {
+                            tibberConfig.minPowerProduction = true;
+                        }
+                        if (this.config.FeedConfigMaxPowerProduction) {
+                            tibberConfig.maxPowerProduction = true;
+                        }
+                        if (this.config.FeedConfigLastMeterProduction) {
+                            tibberConfig.lastMeterProduction = true;
+                        }
+                        if (this.config.FeedConfigPowerFactor) {
+                            tibberConfig.powerFactor = true;
+                        }
+                        if (this.config.FeedConfigVoltagePhase1) {
+                            tibberConfig.voltagePhase1 = true;
+                        }
+                        if (this.config.FeedConfigVoltagePhase2) {
+                            tibberConfig.voltagePhase2 = true;
+                        }
+                        if (this.config.FeedConfigVoltagePhase3) {
+                            tibberConfig.voltagePhase3 = true;
+                        }
+                        if (this.config.FeedConfigCurrentL1) {
+                            tibberConfig.currentL1 = true;
+                        }
+                        if (this.config.FeedConfigCurrentL2) {
+                            tibberConfig.currentL2 = true;
+                        }
+                        if (this.config.FeedConfigCurrentL3) {
+                            tibberConfig.currentL3 = true;
+                        }
+                        if (this.config.FeedConfigSignalStrength) {
+                            tibberConfig.signalStrength = true;
+                        }
+                        const tibberPulse = new tibberPulse_1.TibberPulse(tibberConfig, this);
+                        tibberPulse.ConnectPulseStream();
+                    }
+                    catch (e) {
+                        this.log.warn(e.message);
+                    }
                 }
             }
         }

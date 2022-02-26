@@ -31,8 +31,11 @@ Reading data from tibber API:
 
 ### **WORK IN PROGRESS**
 
+- switch from schedule to deamon
 - Load current energy price on 5 min interval
 - optimize structure and internal objects
+- connects tibber pulse and get data
+- configurate fields for tibber pulse feed
 
 ### Future
 
