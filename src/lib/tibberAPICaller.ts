@@ -109,13 +109,33 @@ export class TibberAPICaller {
 		this.checkAndSetValue(this.getStatePrefix(objectDestination, "Longitude"), address.longitude);
 	}
 
-	private fetchPrice(objectDestination: string, price: IPrice){
-		this.checkAndSetValueNumber(this.getStatePrefix(objectDestination, "total"), price.total, "The total price (energy + taxes)");
-		this.checkAndSetValueNumber(this.getStatePrefix(objectDestination, "energy"), price.energy, "Nordpool spot price");
-		this.checkAndSetValueNumber(this.getStatePrefix(objectDestination, "tax"), price.tax, "The tax part of the price (guarantee of origin certificate, energy tax (Sweden only) and VAT)");
-		this.checkAndSetValue(this.getStatePrefix(objectDestination, "startsAt"), price.startsAt, "The start time of the price");
+	private fetchPrice(objectDestination: string, price: IPrice): void {
+		this.checkAndSetValueNumber(
+			this.getStatePrefix(objectDestination, "total"),
+			price.total,
+			"The total price (energy + taxes)",
+		);
+		this.checkAndSetValueNumber(
+			this.getStatePrefix(objectDestination, "energy"),
+			price.energy,
+			"Nordpool spot price",
+		);
+		this.checkAndSetValueNumber(
+			this.getStatePrefix(objectDestination, "tax"),
+			price.tax,
+			"The tax part of the price (guarantee of origin certificate, energy tax (Sweden only) and VAT)",
+		);
+		this.checkAndSetValue(
+			this.getStatePrefix(objectDestination, "startsAt"),
+			price.startsAt,
+			"The start time of the price",
+		);
 		//this.checkAndSetValue(this.getStatePrefix(objectDestination, "currency"), price.currency, "The price currency");
-		this.checkAndSetValue(this.getStatePrefix(objectDestination, "level"), price.level, "The price level compared to recent price values");
+		this.checkAndSetValue(
+			this.getStatePrefix(objectDestination, "level"),
+			price.level,
+			"The price level compared to recent price values",
+		);
 	}
 
 	private fetchLegalEntity(objectDestination: string, legalEntity: ILegalEntity): void {

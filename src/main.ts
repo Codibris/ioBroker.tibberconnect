@@ -67,7 +67,6 @@ class Tibberconnect extends utils.Adapter {
 				}
 			}, 300000);
 			this.intervallList.push(energyPriceCallIntervall);
-			energyPriceCallIntervall
 			// If User uses TibberConfig - start connection
 			if (this.config.PulseActive) {
 				try {
