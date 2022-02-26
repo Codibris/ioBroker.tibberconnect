@@ -63,8 +63,6 @@ class Tibberconnect extends utils.Adapter {
                     feedUrl: "wss://api.tibber.com/v1-beta/gql/subscriptions",
                     queryUrl: "https://api.tibber.com/v1-beta/gql",
                 },
-                timestamp: true,
-                power: true,
             };
             // Now read all Data from API
             const tibberAPICaller = new tibberAPICaller_1.TibberAPICaller(tibberConfig, this);
@@ -81,12 +79,41 @@ class Tibberconnect extends utils.Adapter {
             this.intervallList.push(energyPriceCallIntervall);
             // If User uses TibberConfig - start connection
             if (this.config.PulseActive) {
-                try {
-                    const tibberPulse = new tibberPulse_1.TibberPulse(tibberConfig, this);
-                    tibberPulse.ConnectPulseStream();
-                }
-                catch (e) {
-                    this.log.warn(e.message);
+                for (const index in this.homeIdList) {
+                    try {
+                        tibberConfig.homeId = this.homeIdList[index];
+                        // define fields for Datafeed
+                        tibberConfig.timestamp = true;
+                        tibberConfig.power = true;
+                        tibberConfig.lastMeterConsumption = true;
+                        tibberConfig.accumulatedConsumption = true;
+                        tibberConfig.accumulatedProduction = true;
+                        tibberConfig.accumulatedConsumptionLastHour = true;
+                        tibberConfig.accumulatedProductionLastHour = true;
+                        tibberConfig.accumulatedCost = true;
+                        tibberConfig.accumulatedReward = true;
+                        tibberConfig.currency = true;
+                        tibberConfig.minPower = true;
+                        tibberConfig.averagePower = true;
+                        tibberConfig.maxPower = true;
+                        tibberConfig.powerProduction = true;
+                        tibberConfig.minPowerProduction = true;
+                        tibberConfig.maxPowerProduction = true;
+                        tibberConfig.lastMeterProduction = true;
+                        tibberConfig.powerFactor = true;
+                        tibberConfig.voltagePhase1 = true;
+                        tibberConfig.voltagePhase2 = true;
+                        tibberConfig.voltagePhase3 = true;
+                        tibberConfig.currentL1 = true;
+                        tibberConfig.currentL2 = true;
+                        tibberConfig.currentL3 = true;
+                        tibberConfig.signalStrength = true;
+                        const tibberPulse = new tibberPulse_1.TibberPulse(tibberConfig, this);
+                        tibberPulse.ConnectPulseStream();
+                    }
+                    catch (e) {
+                        this.log.warn(e.message);
+                    }
                 }
             }
         }

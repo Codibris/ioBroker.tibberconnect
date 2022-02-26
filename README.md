@@ -33,6 +33,7 @@ Reading data from tibber API:
 
 - Load current energy price on 5 min interval
 - optimize structure and internal objects
+- connects tibber pulse and get data
 
 ### Future
 
