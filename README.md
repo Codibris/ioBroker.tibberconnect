@@ -17,6 +17,14 @@
 connects tibber API and ioBroker
 
 ## Changelog
+### 0.0.2 (2022-02-26)
+
+- switch from schedule to deamon
+- Load current energy price on 5 min interval
+- optimize structure and internal objects
+- connects tibber pulse and get data
+- configurate fields for tibber pulse feed
+
 ### 0.0.1 (2022-02-18)
 
 Reading data from tibber API:
@@ -28,14 +36,6 @@ Reading data from tibber API:
 - energy prices of today
 - energy prices of tomorrow
 - acitvate or deaktivate pulse (no data at the moment)
-
-### **WORK IN PROGRESS**
-
-- switch from schedule to deamon
-- Load current energy price on 5 min interval
-- optimize structure and internal objects
-- connects tibber pulse and get data
-- configurate fields for tibber pulse feed
 
 ### Future
 
