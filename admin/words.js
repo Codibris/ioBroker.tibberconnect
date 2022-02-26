@@ -16,10 +16,14 @@ systemDictionary = {
 	},
 	TibberAPIToken: {
 		en: "token for tibber api",
-		de: "Token für Tibber API"
+		de: "Token für Tibber API",
 	},
 	PulseActive: {
 		en: "use tibber pulse (all homes)",
-		de: "Tibber Pulse verwenden (alle "\"Zuhause\"")
+		de: "Tibber Pulse verwenden (alle Zuhause)",
 	},
+	SelectFieldsForFeed: {
+		en: "Select all fields you want to load in feed data (power and timestamp are default):",
+		de: "Wählen Sie alle Felder, die beim Abruf der Live Messung abgerufen werden sollen (Power und Zeitstempel sind per Standard enthalten):",
+	}
 };

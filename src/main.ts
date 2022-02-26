@@ -38,7 +38,6 @@ class Tibberconnect extends utils.Adapter {
 
 		// Reset the connection indicator during startup
 		this.setState("info.connection", false, true);
-
 		if (this.config.TibberAPIToken == null) {
 			// No Token defined in configuration
 			this.log.warn("Missing API Token - please check configuration");
@@ -67,36 +66,82 @@ class Tibberconnect extends utils.Adapter {
 			this.intervallList.push(energyPriceCallIntervall);
 
 			// If User uses TibberConfig - start connection
-			if (this.config.PulseActive) {
+			if (this.config.FeedActive) {
 				for (const index in this.homeIdList) {
 					try {
 						tibberConfig.homeId = this.homeIdList[index];
 						// define fields for Datafeed
 						tibberConfig.timestamp = true;
 						tibberConfig.power = true;
-						tibberConfig.lastMeterConsumption = true;
-						tibberConfig.accumulatedConsumption = true;
-						tibberConfig.accumulatedProduction = true;
-						tibberConfig.accumulatedConsumptionLastHour = true;
-						tibberConfig.accumulatedProductionLastHour = true;
-						tibberConfig.accumulatedCost = true;
-						tibberConfig.accumulatedReward = true;
-						tibberConfig.currency = true;
-						tibberConfig.minPower = true;
-						tibberConfig.averagePower = true;
-						tibberConfig.maxPower = true;
-						tibberConfig.powerProduction = true;
-						tibberConfig.minPowerProduction = true;
-						tibberConfig.maxPowerProduction = true;
-						tibberConfig.lastMeterProduction = true;
-						tibberConfig.powerFactor = true;
-						tibberConfig.voltagePhase1 = true;
-						tibberConfig.voltagePhase2 = true;
-						tibberConfig.voltagePhase3 = true;
-						tibberConfig.currentL1 = true;
-						tibberConfig.currentL2 = true;
-						tibberConfig.currentL3 = true;
-						tibberConfig.signalStrength = true;
+						if (this.config.FeedConfigLastMeterConsumption) {
+							tibberConfig.lastMeterConsumption = true;
+						}
+						if (this.config.FeedConfigAccumulatedConsumption) {
+							tibberConfig.accumulatedConsumption = true;
+						}
+						if (this.config.FeedConfigAccumulatedProduction) {
+							tibberConfig.accumulatedProduction = true;
+						}
+						if (this.config.FeedConfigAccumulatedConsumptionLastHour) {
+							tibberConfig.accumulatedConsumptionLastHour = true;
+						}
+						if (this.config.FeedConfigAccumulatedProductionLastHour) {
+							tibberConfig.accumulatedProductionLastHour = true;
+						}
+						if (this.config.FeedConfigAccumulatedCost) {
+							tibberConfig.accumulatedCost = true;
+						}
+						if (this.config.FeedConfigAccumulatedCost) {
+							tibberConfig.accumulatedReward = true;
+						}
+						if (this.config.FeedConfigCurrency) {
+							tibberConfig.currency = true;
+						}
+						if (this.config.FeedConfigMinPower) {
+							tibberConfig.minPower = true;
+						}
+						if (this.config.FeedConfigAveragePower) {
+							tibberConfig.averagePower = true;
+						}
+						if (this.config.FeedConfigMaxPower) {
+							tibberConfig.maxPower = true;
+						}
+						if (this.config.FeedConfigPowerProduction) {
+							tibberConfig.powerProduction = true;
+						}
+						if (this.config.FeedConfigMinPowerProduction) {
+							tibberConfig.minPowerProduction = true;
+						}
+						if (this.config.FeedConfigMaxPowerProduction) {
+							tibberConfig.maxPowerProduction = true;
+						}
+						if (this.config.FeedConfigLastMeterProduction) {
+							tibberConfig.lastMeterProduction = true;
+						}
+						if (this.config.FeedConfigPowerFactor) {
+							tibberConfig.powerFactor = true;
+						}
+						if (this.config.FeedConfigVoltagePhase1) {
+							tibberConfig.voltagePhase1 = true;
+						}
+						if (this.config.FeedConfigVoltagePhase2) {
+							tibberConfig.voltagePhase2 = true;
+						}
+						if (this.config.FeedConfigVoltagePhase3) {
+							tibberConfig.voltagePhase3 = true;
+						}
+						if (this.config.FeedConfigCurrentL1) {
+							tibberConfig.currentL1 = true;
+						}
+						if (this.config.FeedConfigCurrentL2) {
+							tibberConfig.currentL2 = true;
+						}
+						if (this.config.FeedConfigCurrentL3) {
+							tibberConfig.currentL3 = true;
+						}
+						if (this.config.FeedConfigSignalStrength) {
+							tibberConfig.signalStrength = true;
+						}
 						const tibberPulse = new TibberPulse(tibberConfig, this);
 						tibberPulse.ConnectPulseStream();
 					} catch (e) {
