@@ -40,6 +40,8 @@ class Tibberconnect extends utils.Adapter {
         // this.on("objectChange", this.onObjectChange.bind(this));
         // this.on("message", this.onMessage.bind(this));
         this.on("unload", this.onUnload.bind(this));
+        this.homeIdList = [];
+        this.intervallList = [];
     }
     /**
      * Is called when databases are connected and adapter received configuration.
@@ -66,7 +68,18 @@ class Tibberconnect extends utils.Adapter {
             };
             // Now read all Data from API
             const tibberAPICaller = new tibberAPICaller_1.TibberAPICaller(tibberConfig, this);
-            await tibberAPICaller.updateDataForHomesFromAPI();
+            this.homeIdList = await tibberAPICaller.updateHomesFromAPI();
+            const energyPriceCallIntervall = this.setInterval(() => {
+                this.log.info("Timer läuft!");
+                if (this.homeIdList.length > 0) {
+                    for (const index in this.homeIdList) {
+                        this.log.info(this.homeIdList[index]);
+                        tibberAPICaller.updateCurrentPrice(this.homeIdList[index]);
+                    }
+                }
+            }, 300000);
+            this.intervallList.push(energyPriceCallIntervall);
+            energyPriceCallIntervall;
             // If User uses TibberConfig - start connection
             if (this.config.PulseActive) {
                 try {
@@ -89,6 +102,9 @@ class Tibberconnect extends utils.Adapter {
             // clearTimeout(timeout2);
             // ...
             // clearInterval(interval1);
+            for (const index in this.intervallList) {
+                this.clearInterval(this.intervallList[index]);
+            }
             callback();
         }
         catch (e) {

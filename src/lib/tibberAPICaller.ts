@@ -3,6 +3,7 @@ import { IConfig, TibberQuery } from "tibber-api";
 import { IAddress } from "tibber-api/lib/src/models/IAddress";
 import { IContactInfo } from "tibber-api/lib/src/models/IContactInfo";
 import { ILegalEntity } from "tibber-api/lib/src/models/ILegalEntity";
+import { IPrice } from "tibber-api/lib/src/models/IPrice";
 
 export class TibberAPICaller {
 	tibberConfig: IConfig;
@@ -17,12 +18,14 @@ export class TibberAPICaller {
 		this.currentHomeId = "";
 	}
 
-	async updateDataForHomesFromAPI(): Promise<void> {
+	async updateHomesFromAPI(): Promise<string[]> {
 		const currentHomes = await this.tibberQuery.getHomes();
 		this.adapter.log.info(JSON.stringify(currentHomes));
+		const homeIdList: string[] = [];
 		for (const homeIndex in currentHomes) {
 			const currentHome = currentHomes[homeIndex];
 			this.currentHomeId = currentHome.id;
+			homeIdList.push(this.currentHomeId);
 			// Set HomeId in tibberConfig for further API Calls
 			this.tibberConfig.homeId = this.currentHomeId;
 			// Home GENERAL
@@ -82,6 +85,17 @@ export class TibberAPICaller {
 				currentHome.features.realTimeConsumptionEnabled,
 			);
 		}
+
+		return homeIdList;
+	}
+
+	async updateCurrentPrice(homeId: string): Promise<void> {
+		if (homeId) {
+			const currentPrice = await this.tibberQuery.getCurrentEnergyPrice(homeId);
+			this.adapter.log.info(JSON.stringify(currentPrice));
+			this.currentHomeId = homeId;
+			await this.fetchPrice("CurrentPrice", currentPrice);
+		}
 	}
 
 	private fetchAddress(objectDestination: string, address: IAddress): void {
@@ -93,6 +107,15 @@ export class TibberAPICaller {
 		this.checkAndSetValue(this.getStatePrefix(objectDestination, "Country"), address.country);
 		this.checkAndSetValue(this.getStatePrefix(objectDestination, "Latitude"), address.latitude);
 		this.checkAndSetValue(this.getStatePrefix(objectDestination, "Longitude"), address.longitude);
+	}
+
+	private fetchPrice(objectDestination: string, price: IPrice){
+		this.checkAndSetValueNumber(this.getStatePrefix(objectDestination, "total"), price.total, "The total price (energy + taxes)");
+		this.checkAndSetValueNumber(this.getStatePrefix(objectDestination, "energy"), price.energy, "Nordpool spot price");
+		this.checkAndSetValueNumber(this.getStatePrefix(objectDestination, "tax"), price.tax, "The tax part of the price (guarantee of origin certificate, energy tax (Sweden only) and VAT)");
+		this.checkAndSetValue(this.getStatePrefix(objectDestination, "startsAt"), price.startsAt, "The start time of the price");
+		//this.checkAndSetValue(this.getStatePrefix(objectDestination, "currency"), price.currency, "The price currency");
+		this.checkAndSetValue(this.getStatePrefix(objectDestination, "level"), price.level, "The price level compared to recent price values");
 	}
 
 	private fetchLegalEntity(objectDestination: string, legalEntity: ILegalEntity): void {

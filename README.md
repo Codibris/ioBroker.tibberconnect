@@ -21,13 +21,18 @@ connects tibber API and ioBroker
 
 Reading data from tibber API:
 
--   list and details of homes
--   details of metering point
--   features of account
--   current energy price
--   energy prices of today
--   energy prices of tomorrow
--   acitvate or deaktivate pulse (no data at the moment)
+- list and details of homes
+- details of metering point
+- features of account
+- current energy price
+- energy prices of today
+- energy prices of tomorrow
+- acitvate or deaktivate pulse (no data at the moment)
+
+### **WORK IN PROGRESS**
+
+- Load current energy price on 5 min interval
+- optimize structure and internal objects
 
 ### Future
 
