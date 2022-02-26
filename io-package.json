@@ -1,7 +1,7 @@
 {
 	"common": {
 		"name": "tibberconnect",
-		"version": "0.0.1",
+		"version": "0.0.2",
 		"news": {
 			"0.0.1": {
 				"en": "initial release",
@@ -10,6 +10,10 @@
 			"0.0.2": {
 				"en": "optimize and fix",
 				"de": "Optimierungen und Verbesserungen"
+			},
+			"0.0.3": {
+				"en": "prices from today and tomorrow",
+				"de": "Tagespreise und Preise von morgen laden"
 			}
 		},
 		"title": "Tibber Connect",
