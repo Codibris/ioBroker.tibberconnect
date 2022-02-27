@@ -17,7 +17,7 @@
 connects tibber API and ioBroker
 
 ## Changelog
-### **WORK IN PROGRESS**
+### 0.0.3 (2022-02-27)
 
 - get prices of today and tomorrow
 
