@@ -12,7 +12,6 @@ class TibberAPICaller extends tibberHelper_1.TibberHelper {
     }
     async updateHomesFromAPI() {
         const currentHomes = await this.tibberQuery.getHomes();
-        this.adapter.log.info(JSON.stringify(currentHomes));
         const homeIdList = [];
         for (const homeIndex in currentHomes) {
             const currentHome = currentHomes[homeIndex];
@@ -59,7 +58,6 @@ class TibberAPICaller extends tibberHelper_1.TibberHelper {
     }
     async updatePricesTomorrow(homeId) {
         const pricesTomorrow = await this.tibberQuery.getTomorrowsEnergyPrices(homeId);
-        this.adapter.log.info(JSON.stringify(pricesTomorrow));
         this.currentHomeId = homeId;
         for (const index in pricesTomorrow) {
             const price = pricesTomorrow[index];

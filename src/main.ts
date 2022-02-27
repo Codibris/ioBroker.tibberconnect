@@ -71,6 +71,16 @@ class Tibberconnect extends utils.Adapter {
 			}, 300000);
 			this.intervallList.push(energyPriceCallIntervall);
 
+			const energyPricesListUpdateIntervall = this.setInterval(() => {
+				if (this.homeIdList.length > 0) {
+					for (const index in this.homeIdList) {
+						tibberAPICaller.updatePricesToday(this.homeIdList[index]);
+						tibberAPICaller.updatePricesTomorrow(this.homeIdList[index]);
+					}
+				}
+			}, 300000);
+			this.intervallList.push(energyPricesListUpdateIntervall);
+
 			// If User uses TibberConfig - start connection
 			if (this.config.FeedActive) {
 				for (const index in this.homeIdList) {
