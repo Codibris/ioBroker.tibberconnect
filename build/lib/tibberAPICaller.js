@@ -12,7 +12,6 @@ class TibberAPICaller extends tibberHelper_1.TibberHelper {
     }
     async updateHomesFromAPI() {
         const currentHomes = await this.tibberQuery.getHomes();
-        this.adapter.log.info(JSON.stringify(currentHomes));
         const homeIdList = [];
         for (const homeIndex in currentHomes) {
             const currentHome = currentHomes[homeIndex];
@@ -44,9 +43,26 @@ class TibberAPICaller extends tibberHelper_1.TibberHelper {
     async updateCurrentPrice(homeId) {
         if (homeId) {
             const currentPrice = await this.tibberQuery.getCurrentEnergyPrice(homeId);
-            this.adapter.log.info(JSON.stringify(currentPrice));
             this.currentHomeId = homeId;
             await this.fetchPrice("CurrentPrice", currentPrice);
+        }
+    }
+    async updatePricesToday(homeId) {
+        const pricesToday = await this.tibberQuery.getTodaysEnergyPrices(homeId);
+        this.currentHomeId = homeId;
+        for (const index in pricesToday) {
+            const price = pricesToday[index];
+            const hour = new Date(price.startsAt).getHours();
+            this.fetchPrice("PricesToday." + hour, price);
+        }
+    }
+    async updatePricesTomorrow(homeId) {
+        const pricesTomorrow = await this.tibberQuery.getTomorrowsEnergyPrices(homeId);
+        this.currentHomeId = homeId;
+        for (const index in pricesTomorrow) {
+            const price = pricesTomorrow[index];
+            const hour = new Date(price.startsAt).getHours();
+            this.fetchPrice("PricesTomorrow." + hour, price);
         }
     }
     fetchAddress(objectDestination, address) {

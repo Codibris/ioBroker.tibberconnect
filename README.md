@@ -36,11 +36,10 @@ Reading data from tibber API:
 - energy prices of today
 - energy prices of tomorrow
 - acitvate or deaktivate pulse (no data at the moment)
+- 
+### **WORK IN PROGRESS**
 
-### Future
-
--   more data
--   datastream for tibber pulse
+- get prices of today and tomorrow
 
 ## License
 
