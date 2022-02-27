@@ -54,11 +54,17 @@ class Tibberconnect extends utils.Adapter {
 			// Now read all Data from API
 			const tibberAPICaller = new TibberAPICaller(tibberConfig, this);
 			this.homeIdList = await tibberAPICaller.updateHomesFromAPI();
+			// Init Load Data for home
+			if (this.homeIdList.length > 0) {
+				for (const index in this.homeIdList) {
+					tibberAPICaller.updateCurrentPrice(this.homeIdList[index]);
+					tibberAPICaller.updatePricesToday(this.homeIdList[index]);
+					tibberAPICaller.updatePricesTomorrow(this.homeIdList[index]);
+				}
+			}
 			const energyPriceCallIntervall = this.setInterval(() => {
-				this.log.info("Timer läuft!");
 				if (this.homeIdList.length > 0) {
 					for (const index in this.homeIdList) {
-						this.log.info(this.homeIdList[index]);
 						tibberAPICaller.updateCurrentPrice(this.homeIdList[index]);
 					}
 				}

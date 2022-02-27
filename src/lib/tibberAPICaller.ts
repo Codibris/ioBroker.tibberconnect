@@ -100,9 +100,29 @@ export class TibberAPICaller extends TibberHelper {
 	async updateCurrentPrice(homeId: string): Promise<void> {
 		if (homeId) {
 			const currentPrice = await this.tibberQuery.getCurrentEnergyPrice(homeId);
-			this.adapter.log.info(JSON.stringify(currentPrice));
 			this.currentHomeId = homeId;
 			await this.fetchPrice("CurrentPrice", currentPrice);
+		}
+	}
+
+	async updatePricesToday(homeId: string): Promise<void> {
+		const pricesToday = await this.tibberQuery.getTodaysEnergyPrices(homeId);
+		this.currentHomeId = homeId;
+		for (const index in pricesToday) {
+			const price = pricesToday[index];
+			const hour = new Date(price.startsAt).getHours();
+			this.fetchPrice("PricesToday." + hour, price);
+		}
+	}
+
+	async updatePricesTomorrow(homeId: string): Promise<void> {
+		const pricesTomorrow = await this.tibberQuery.getTomorrowsEnergyPrices(homeId);
+		this.adapter.log.info(JSON.stringify(pricesTomorrow));
+		this.currentHomeId = homeId;
+		for (const index in pricesTomorrow) {
+			const price = pricesTomorrow[index];
+			const hour = new Date(price.startsAt).getHours();
+			this.fetchPrice("PricesTomorrow." + hour, price);
 		}
 	}
 
