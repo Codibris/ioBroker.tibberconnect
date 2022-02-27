@@ -17,6 +17,10 @@
 connects tibber API and ioBroker
 
 ## Changelog
+### 0.0.3 (2022-02-27)
+
+- get prices of today and tomorrow
+
 ### 0.0.2 (2022-02-26)
 
 - switch from schedule to deamon
@@ -36,10 +40,7 @@ Reading data from tibber API:
 - energy prices of today
 - energy prices of tomorrow
 - acitvate or deaktivate pulse (no data at the moment)
-- 
-### **WORK IN PROGRESS**
-
-- get prices of today and tomorrow
+-
 
 ## License
 
