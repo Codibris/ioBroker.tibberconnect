@@ -25,7 +25,7 @@
     "tibber-api": "~4.0.0"
   },
   "devDependencies": {
-    "@alcalzone/release-script": "^3.5.2",
+    "@alcalzone/release-script": "^3.5.9",
     "@iobroker/testing": "^2.6.0",
     "@types/chai": "^4.3.1",
     "@types/chai-as-promised": "^7.1.5",
