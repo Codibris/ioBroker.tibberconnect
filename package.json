@@ -21,7 +21,7 @@
     "url": "https://github.com/Codibris/ioBroker.tibberconnect"
   },
   "dependencies": {
-    "@iobroker/adapter-core": "^2.6.0",
+    "@iobroker/adapter-core": "^2.6.6",
     "tibber-api": "~4.1.0"
   },
   "devDependencies": {
