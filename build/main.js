@@ -54,7 +54,7 @@ class Tibberconnect extends utils.Adapter {
         // Initialize your adapter here
         // Reset the connection indicator during startup
         this.setState("info.connection", false, true);
-        if (this.config.TibberAPIToken == null) {
+        if (!this.config.TibberAPIToken) {
             // No Token defined in configuration
             this.log.warn("Missing API Token - please check configuration");
         }
