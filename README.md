@@ -17,6 +17,9 @@
 connects tibber API and ioBroker
 
 ## Changelog
+### *WORK IN PROGRESS*
+- change connection state with live measurement
+
 ### 0.0.6 (2022-11-19)
 - quick temp. implementation of new tibber api Package
 

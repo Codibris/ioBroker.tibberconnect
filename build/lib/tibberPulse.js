@@ -8,14 +8,16 @@ class TibberPulse extends tibberHelper_1.TibberHelper {
         super(adapter);
         this.tibberConfig = tibberConfig;
         this.tibberFeed = new tibber_api_1.TibberFeed(new tibber_api_1.TibberQuery(tibberConfig));
-    }
-    ConnectPulseStream() {
-        try {
-            this.tibberFeed.connect();
-        }
-        catch (e) {
-            this.adapter.log.warn("Error on connect Feed:" + e.message);
-        }
+        // Set info.connection state
+        this.tibberFeed.on("connected", (data) => {
+            this.adapter.log.debug("Tibber Feed: " + data.toString());
+            this.adapter.setState("info.connection", true, true);
+        });
+        // Set info.connection state
+        this.tibberFeed.on("disconnected", (data) => {
+            this.adapter.log.debug("Tibber Feed: " + data.toString());
+            this.adapter.setState("info.connection", false, true);
+        });
         // Add Error Handler on connection
         this.tibberFeed.on("error", (e) => {
             this.adapter.log.error('Error in Tibber Feed on "' + e[0]["path"] + '" with message "' + e[0]["message"] + '"');
@@ -25,6 +27,14 @@ class TibberPulse extends tibberHelper_1.TibberHelper {
             const receivedData = data;
             this.fetchLiveMeasurement("LiveMeasurement", receivedData);
         });
+    }
+    ConnectPulseStream() {
+        try {
+            this.tibberFeed.connect();
+        }
+        catch (e) {
+            this.adapter.log.warn("Error on connect Feed:" + e.message);
+        }
     }
     DisconnectPulseStream() {
         try {
