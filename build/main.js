@@ -64,7 +64,6 @@ class Tibberconnect extends utils.Adapter {
                 active: true,
                 apiEndpoint: {
                     apiKey: this.config.TibberAPIToken,
-                    //feedUrl: "wss://api.tibber.com/v1-beta/gql/subscriptions",
                     queryUrl: "https://api.tibber.com/v1-beta/gql",
                 },
             };
