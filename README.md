@@ -17,7 +17,7 @@
 connects tibber API and ioBroker
 
 ## Changelog
-### *WORK IN PROGRESS*
+### **WORK IN PROGRESS**
 - change connection state with live measurement
 - Tibber API: breaking change in websocket subscriptions December 2022
 
