@@ -40,6 +40,7 @@ class Tibberconnect extends utils.Adapter {
 		if (!this.config.TibberAPIToken) {
 			// No Token defined in configuration
 			this.log.warn("Missing API Token - please check configuration");
+			this.setState("info.connection", false, true);
 		} else {
 			// Config object needed when instantiating TibberQuery
 			const tibberConfig: IConfig = {
@@ -53,6 +54,20 @@ class Tibberconnect extends utils.Adapter {
 			// Now read all Data from API
 			const tibberAPICaller = new TibberAPICaller(tibberConfig, this);
 			this.homeIdList = await tibberAPICaller.updateHomesFromAPI();
+			// if feed is not used - set info.connection if data received
+			if (!this.config.FeedActive) {
+				if (this.homeIdList) {
+					this.setState("info.connection", true, true);
+					this.log.debug(
+						"Connection Check: Feed not enabled and I received home list from api - good connection",
+					);
+				} else {
+					this.setState("info.connection", false, true);
+					this.log.debug(
+						"Connection Check: Feed not enabled and I do not get home list from api - bad connection",
+					);
+				}
+			}
 			// Init Load Data for home
 			if (this.homeIdList.length > 0) {
 				for (const index in this.homeIdList) {
