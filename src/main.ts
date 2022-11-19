@@ -15,6 +15,7 @@ import { TibberPulse } from "./lib/tibberPulse";
 class Tibberconnect extends utils.Adapter {
 	intervallList: ioBroker.Interval[];
 	homeIdList: string[];
+	queryUrl = "";
 
 	public constructor(options: Partial<utils.AdapterOptions> = {}) {
 		super({
@@ -28,6 +29,7 @@ class Tibberconnect extends utils.Adapter {
 		this.on("unload", this.onUnload.bind(this));
 		this.homeIdList = [];
 		this.intervallList = [];
+		this.queryUrl = "https://api.tibber.com/v1-beta/gql";
 	}
 
 	/**
@@ -42,16 +44,23 @@ class Tibberconnect extends utils.Adapter {
 			this.log.warn("Missing API Token - please check configuration");
 			this.setState("info.connection", false, true);
 		} else {
-			// Config object needed when instantiating TibberQuery
-			const tibberConfig: IConfig = {
+			// Need 2 configs - API and Feed (feed chaged query url)
+			const tibberConfigAPI: IConfig = {
 				active: true,
 				apiEndpoint: {
 					apiKey: this.config.TibberAPIToken,
-					queryUrl: "https://api.tibber.com/v1-beta/gql",
+					queryUrl: this.queryUrl,
+				},
+			};
+			const tibberConfigFeed: IConfig = {
+				active: true,
+				apiEndpoint: {
+					apiKey: this.config.TibberAPIToken,
+					queryUrl: this.queryUrl,
 				},
 			};
 			// Now read all Data from API
-			const tibberAPICaller = new TibberAPICaller(tibberConfig, this);
+			const tibberAPICaller = new TibberAPICaller(tibberConfigAPI, this);
 			this.homeIdList = await tibberAPICaller.updateHomesFromAPI();
 			// if feed is not used - set info.connection if data received
 			if (!this.config.FeedActive) {
@@ -98,80 +107,80 @@ class Tibberconnect extends utils.Adapter {
 			if (this.config.FeedActive) {
 				for (const index in this.homeIdList) {
 					try {
-						tibberConfig.homeId = this.homeIdList[index];
+						tibberConfigFeed.homeId = this.homeIdList[index];
 						// define fields for Datafeed
-						tibberConfig.timestamp = true;
-						tibberConfig.power = true;
+						tibberConfigFeed.timestamp = true;
+						tibberConfigFeed.power = true;
 						if (this.config.FeedConfigLastMeterConsumption) {
-							tibberConfig.lastMeterConsumption = true;
+							tibberConfigFeed.lastMeterConsumption = true;
 						}
 						if (this.config.FeedConfigAccumulatedConsumption) {
-							tibberConfig.accumulatedConsumption = true;
+							tibberConfigFeed.accumulatedConsumption = true;
 						}
 						if (this.config.FeedConfigAccumulatedProduction) {
-							tibberConfig.accumulatedProduction = true;
+							tibberConfigFeed.accumulatedProduction = true;
 						}
 						if (this.config.FeedConfigAccumulatedConsumptionLastHour) {
-							tibberConfig.accumulatedConsumptionLastHour = true;
+							tibberConfigFeed.accumulatedConsumptionLastHour = true;
 						}
 						if (this.config.FeedConfigAccumulatedProductionLastHour) {
-							tibberConfig.accumulatedProductionLastHour = true;
+							tibberConfigFeed.accumulatedProductionLastHour = true;
 						}
 						if (this.config.FeedConfigAccumulatedCost) {
-							tibberConfig.accumulatedCost = true;
+							tibberConfigFeed.accumulatedCost = true;
 						}
 						if (this.config.FeedConfigAccumulatedCost) {
-							tibberConfig.accumulatedReward = true;
+							tibberConfigFeed.accumulatedReward = true;
 						}
 						if (this.config.FeedConfigCurrency) {
-							tibberConfig.currency = true;
+							tibberConfigFeed.currency = true;
 						}
 						if (this.config.FeedConfigMinPower) {
-							tibberConfig.minPower = true;
+							tibberConfigFeed.minPower = true;
 						}
 						if (this.config.FeedConfigAveragePower) {
-							tibberConfig.averagePower = true;
+							tibberConfigFeed.averagePower = true;
 						}
 						if (this.config.FeedConfigMaxPower) {
-							tibberConfig.maxPower = true;
+							tibberConfigFeed.maxPower = true;
 						}
 						if (this.config.FeedConfigPowerProduction) {
-							tibberConfig.powerProduction = true;
+							tibberConfigFeed.powerProduction = true;
 						}
 						if (this.config.FeedConfigMinPowerProduction) {
-							tibberConfig.minPowerProduction = true;
+							tibberConfigFeed.minPowerProduction = true;
 						}
 						if (this.config.FeedConfigMaxPowerProduction) {
-							tibberConfig.maxPowerProduction = true;
+							tibberConfigFeed.maxPowerProduction = true;
 						}
 						if (this.config.FeedConfigLastMeterProduction) {
-							tibberConfig.lastMeterProduction = true;
+							tibberConfigFeed.lastMeterProduction = true;
 						}
 						if (this.config.FeedConfigPowerFactor) {
-							tibberConfig.powerFactor = true;
+							tibberConfigFeed.powerFactor = true;
 						}
 						if (this.config.FeedConfigVoltagePhase1) {
-							tibberConfig.voltagePhase1 = true;
+							tibberConfigFeed.voltagePhase1 = true;
 						}
 						if (this.config.FeedConfigVoltagePhase2) {
-							tibberConfig.voltagePhase2 = true;
+							tibberConfigFeed.voltagePhase2 = true;
 						}
 						if (this.config.FeedConfigVoltagePhase3) {
-							tibberConfig.voltagePhase3 = true;
+							tibberConfigFeed.voltagePhase3 = true;
 						}
 						if (this.config.FeedConfigCurrentL1) {
-							tibberConfig.currentL1 = true;
+							tibberConfigFeed.currentL1 = true;
 						}
 						if (this.config.FeedConfigCurrentL2) {
-							tibberConfig.currentL2 = true;
+							tibberConfigFeed.currentL2 = true;
 						}
 						if (this.config.FeedConfigCurrentL3) {
-							tibberConfig.currentL3 = true;
+							tibberConfigFeed.currentL3 = true;
 						}
 						if (this.config.FeedConfigSignalStrength) {
-							tibberConfig.signalStrength = true;
+							tibberConfigFeed.signalStrength = true;
 						}
-						const tibberPulse = new TibberPulse(tibberConfig, this);
+						const tibberPulse = new TibberPulse(tibberConfigFeed, this);
 						tibberPulse.ConnectPulseStream();
 					} catch (e) {
 						this.log.warn((e as Error).message);
