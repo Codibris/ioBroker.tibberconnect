@@ -17,7 +17,7 @@
 connects tibber API and ioBroker
 
 ## Changelog
-### **WORK IN PROGRESS**
+### 0.0.6 (2022-11-19)
 - quick temp. implementation of new tibber api Package
 
 ### 0.0.3 (2022-02-27)
@@ -43,7 +43,6 @@ Reading data from tibber API:
 - energy prices of today
 - energy prices of tomorrow
 - acitvate or deaktivate pulse (no data at the moment)
-
 
 ## License
 
