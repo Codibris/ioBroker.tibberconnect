@@ -7,7 +7,7 @@ class TibberPulse extends tibberHelper_1.TibberHelper {
     constructor(tibberConfig, adapter) {
         super(adapter);
         this.tibberConfig = tibberConfig;
-        this.tibberFeed = new tibber_api_1.TibberFeed(this.tibberConfig);
+        this.tibberFeed = new tibber_api_1.TibberFeed(new tibber_api_1.TibberQuery(tibberConfig));
     }
     ConnectPulseStream() {
         try {
@@ -34,7 +34,7 @@ class TibberPulse extends tibberHelper_1.TibberHelper {
             this.adapter.log.warn("Error on Feed closed:" + e.message);
         }
         // reinit Tibberfeed
-        this.tibberFeed = new tibber_api_1.TibberFeed(this.tibberConfig);
+        this.tibberFeed = new tibber_api_1.TibberFeed(new tibber_api_1.TibberQuery(this.tibberConfig));
     }
     fetchLiveMeasurement(objectDestination, liveMeasurement) {
         if (this.tibberConfig.homeId !== undefined) {

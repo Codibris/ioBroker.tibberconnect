@@ -1,4 +1,4 @@
-import { TibberFeed, IConfig } from "tibber-api";
+import { TibberFeed, IConfig, TibberQuery } from "tibber-api";
 import * as utils from "@iobroker/adapter-core";
 import { ILiveMeasurement } from "tibber-api/lib/src/models/ILiveMeasurement";
 import { TibberHelper } from "./tibberHelper";
@@ -10,7 +10,7 @@ export class TibberPulse extends TibberHelper {
 	constructor(tibberConfig: IConfig, adapter: utils.AdapterInstance) {
 		super(adapter);
 		this.tibberConfig = tibberConfig;
-		this.tibberFeed = new TibberFeed(this.tibberConfig);
+		this.tibberFeed = new TibberFeed(new TibberQuery(tibberConfig));
 	}
 
 	ConnectPulseStream(): void {
@@ -42,7 +42,7 @@ export class TibberPulse extends TibberHelper {
 		}
 
 		// reinit Tibberfeed
-		this.tibberFeed = new TibberFeed(this.tibberConfig);
+		this.tibberFeed = new TibberFeed(new TibberQuery(this.tibberConfig));
 	}
 
 	private fetchLiveMeasurement(objectDestination: string, liveMeasurement: ILiveMeasurement): void {

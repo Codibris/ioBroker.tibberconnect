@@ -1,7 +1,7 @@
 {
 	"common": {
 		"name": "tibberconnect",
-		"version": "0.0.3",
+		"version": "0.0.5",
 		"news": {
 			"0.0.1": {
 				"en": "initial release",
@@ -14,6 +14,14 @@
 			"0.0.3": {
 				"en": "prices from today and tomorrow",
 				"de": "Tagespreise und Preise von morgen laden"
+			},
+			"0.0.4": {
+				"en": "update some dependencies",
+				"de": "update einiger genutzter Pakete"
+			},
+			"0.0.5": {
+				"en": "use new tibber api",
+				"de": "Verwendung der neuen Tibber API Version"
 			}
 		},
 		"title": "Tibber Connect",
