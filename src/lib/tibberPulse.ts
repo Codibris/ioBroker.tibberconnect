@@ -17,6 +17,11 @@ export class TibberPulse extends TibberHelper {
 
 	ConnectPulseStream(): void {
 		try {
+			this.adapter.log.debug("Ermittle Websocket URL für TibberFeed");
+			this.tibberQuery.getWebsocketSubscriptionUrl().then((url) => {
+				this.tibberConfig.apiEndpoint.queryUrl = url.href;
+				this.adapter.log.debug("Websocket URL ermittelt: " + url.href);
+			});
 			this.addEventHandlerOnFeed(this.tibberFeed);
 			this.tibberFeed.connect();
 		} catch (e) {
