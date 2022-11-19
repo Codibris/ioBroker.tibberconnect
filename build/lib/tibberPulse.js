@@ -7,29 +7,12 @@ class TibberPulse extends tibberHelper_1.TibberHelper {
     constructor(tibberConfig, adapter) {
         super(adapter);
         this.tibberConfig = tibberConfig;
-        this.tibberFeed = new tibber_api_1.TibberFeed(new tibber_api_1.TibberQuery(tibberConfig));
-        // Set info.connection state
-        this.tibberFeed.on("connected", (data) => {
-            this.adapter.log.debug("Tibber Feed: " + data.toString());
-            this.adapter.setState("info.connection", true, true);
-        });
-        // Set info.connection state
-        this.tibberFeed.on("disconnected", (data) => {
-            this.adapter.log.debug("Tibber Feed: " + data.toString());
-            this.adapter.setState("info.connection", false, true);
-        });
-        // Add Error Handler on connection
-        this.tibberFeed.on("error", (e) => {
-            this.adapter.log.error('Error in Tibber Feed on "' + e[0]["path"] + '" with message "' + e[0]["message"] + '"');
-        });
-        // Add data receiver
-        this.tibberFeed.on("data", (data) => {
-            const receivedData = data;
-            this.fetchLiveMeasurement("LiveMeasurement", receivedData);
-        });
+        this.tibberQuery = new tibber_api_1.TibberQuery(this.tibberConfig);
+        this.tibberFeed = new tibber_api_1.TibberFeed(this.tibberQuery);
     }
     ConnectPulseStream() {
         try {
+            this.addEventHandlerOnFeed(this.tibberFeed);
             this.tibberFeed.connect();
         }
         catch (e) {
@@ -45,6 +28,27 @@ class TibberPulse extends tibberHelper_1.TibberHelper {
         }
         // reinit Tibberfeed
         this.tibberFeed = new tibber_api_1.TibberFeed(new tibber_api_1.TibberQuery(this.tibberConfig));
+    }
+    addEventHandlerOnFeed(currentFeed) {
+        // Set info.connection state
+        currentFeed.on("connected", (data) => {
+            this.adapter.log.debug("Tibber Feed: " + data.toString());
+            this.adapter.setState("info.connection", true, true);
+        });
+        // Set info.connection state
+        currentFeed.on("disconnected", (data) => {
+            this.adapter.log.debug("Tibber Feed: " + data.toString());
+            this.adapter.setState("info.connection", false, true);
+        });
+        // Add Error Handler on connection
+        currentFeed.on("error", (e) => {
+            this.adapter.log.error('Error in Tibber Feed on "' + e[0]["path"] + '" with message "' + e[0]["message"] + '"');
+        });
+        // Add data receiver
+        currentFeed.on("data", (data) => {
+            const receivedData = data;
+            this.fetchLiveMeasurement("LiveMeasurement", receivedData);
+        });
     }
     fetchLiveMeasurement(objectDestination, liveMeasurement) {
         if (this.tibberConfig.homeId !== undefined) {
