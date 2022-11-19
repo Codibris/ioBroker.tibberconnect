@@ -5,33 +5,23 @@ import { TibberHelper } from "./tibberHelper";
 
 export class TibberPulse extends TibberHelper {
 	tibberConfig: IConfig;
+	tibberQuery: TibberQuery;
 	tibberFeed: TibberFeed;
 
 	constructor(tibberConfig: IConfig, adapter: utils.AdapterInstance) {
 		super(adapter);
 		this.tibberConfig = tibberConfig;
-		this.tibberFeed = new TibberFeed(new TibberQuery(tibberConfig));
+		this.tibberQuery = new TibberQuery(this.tibberConfig);
+		this.tibberFeed = new TibberFeed(this.tibberQuery);
 	}
 
 	ConnectPulseStream(): void {
 		try {
+			this.addEventHandlerOnFeed(this.tibberFeed);
 			this.tibberFeed.connect();
 		} catch (e) {
 			this.adapter.log.warn("Error on connect Feed:" + (e as Error).message);
 		}
-
-		// Add Error Handler on connection
-		this.tibberFeed.on("error", (e) => {
-			this.adapter.log.error(
-				'Error in Tibber Feed on "' + e[0]["path"] + '" with message "' + e[0]["message"] + '"',
-			);
-		});
-
-		// Add data receiver
-		this.tibberFeed.on("data", (data) => {
-			const receivedData: ILiveMeasurement = data;
-			this.fetchLiveMeasurement("LiveMeasurement", receivedData);
-		});
 	}
 
 	DisconnectPulseStream(): void {
@@ -43,6 +33,33 @@ export class TibberPulse extends TibberHelper {
 
 		// reinit Tibberfeed
 		this.tibberFeed = new TibberFeed(new TibberQuery(this.tibberConfig));
+	}
+
+	private addEventHandlerOnFeed(currentFeed: TibberFeed) {
+		// Set info.connection state
+		currentFeed.on("connected", (data) => {
+			this.adapter.log.debug("Tibber Feed: " + data.toString());
+			this.adapter.setState("info.connection", true, true);
+		});
+
+		// Set info.connection state
+		currentFeed.on("disconnected", (data) => {
+			this.adapter.log.debug("Tibber Feed: " + data.toString());
+			this.adapter.setState("info.connection", false, true);
+		});
+
+		// Add Error Handler on connection
+		currentFeed.on("error", (e) => {
+			this.adapter.log.error(
+				'Error in Tibber Feed on "' + e[0]["path"] + '" with message "' + e[0]["message"] + '"',
+			);
+		});
+
+		// Add data receiver
+		currentFeed.on("data", (data) => {
+			const receivedData: ILiveMeasurement = data;
+			this.fetchLiveMeasurement("LiveMeasurement", receivedData);
+		});
 	}
 
 	private fetchLiveMeasurement(objectDestination: string, liveMeasurement: ILiveMeasurement): void {
