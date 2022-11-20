@@ -215,6 +215,8 @@ class Tibberconnect extends utils.Adapter {
             for (const index in this.intervallList) {
                 this.clearInterval(this.intervallList[index]);
             }
+            // info.connect to false, if adapter is closed
+            this.setState("info.connection", false, true);
             callback();
         }
         catch (e) {
