@@ -40,6 +40,16 @@ class TibberAPICaller extends tibberHelper_1.TibberHelper {
         }
         return homeIdList;
     }
+    generateErrorMessage(error, context) {
+        let errorMessages = "";
+        for (const index in error.errors) {
+            if (errorMessages) {
+                errorMessages += ", ";
+            }
+            errorMessages += error.errors[index].message;
+        }
+        return "Fehler (" + error.statusMessage + ") bei Vorgang: " + context + ": " + errorMessages;
+    }
     async updateCurrentPrice(homeId) {
         if (homeId) {
             const currentPrice = await this.tibberQuery.getCurrentEnergyPrice(homeId);

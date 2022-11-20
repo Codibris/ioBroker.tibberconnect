@@ -78,7 +78,12 @@ class Tibberconnect extends utils.Adapter {
             };
             // Now read all Data from API
             const tibberAPICaller = new tibberAPICaller_1.TibberAPICaller(tibberConfigAPI, this);
-            this.homeIdList = await tibberAPICaller.updateHomesFromAPI();
+            try {
+                this.homeIdList = await tibberAPICaller.updateHomesFromAPI();
+            }
+            catch (error) {
+                this.log.warn(tibberAPICaller.generateErrorMessage(error, "Abruf 'homes'"));
+            }
             // if feed is not used - set info.connection if data received
             if (!this.config.FeedActive) {
                 if (this.homeIdList) {
@@ -93,15 +98,35 @@ class Tibberconnect extends utils.Adapter {
             // Init Load Data for home
             if (this.homeIdList.length > 0) {
                 for (const index in this.homeIdList) {
-                    tibberAPICaller.updateCurrentPrice(this.homeIdList[index]);
-                    tibberAPICaller.updatePricesToday(this.homeIdList[index]);
-                    tibberAPICaller.updatePricesTomorrow(this.homeIdList[index]);
+                    try {
+                        tibberAPICaller.updateCurrentPrice(this.homeIdList[index]);
+                    }
+                    catch (error) {
+                        this.log.warn(tibberAPICaller.generateErrorMessage(error, "Abruf 'Aktueller Preis'"));
+                    }
+                    try {
+                        tibberAPICaller.updatePricesToday(this.homeIdList[index]);
+                    }
+                    catch (error) {
+                        this.log.warn(tibberAPICaller.generateErrorMessage(error, "Abruf 'Preise von heute'"));
+                    }
+                    try {
+                        tibberAPICaller.updatePricesTomorrow(this.homeIdList[index]);
+                    }
+                    catch (error) {
+                        this.log.warn(tibberAPICaller.generateErrorMessage(error, "Abruf 'Preise von morgen'"));
+                    }
                 }
             }
             const energyPriceCallIntervall = this.setInterval(() => {
                 if (this.homeIdList.length > 0) {
                     for (const index in this.homeIdList) {
-                        tibberAPICaller.updateCurrentPrice(this.homeIdList[index]);
+                        try {
+                            tibberAPICaller.updateCurrentPrice(this.homeIdList[index]);
+                        }
+                        catch (error) {
+                            this.log.warn(tibberAPICaller.generateErrorMessage(error, "Abruf 'Aktueller Preis'"));
+                        }
                     }
                 }
             }, 300000);
@@ -109,8 +134,18 @@ class Tibberconnect extends utils.Adapter {
             const energyPricesListUpdateIntervall = this.setInterval(() => {
                 if (this.homeIdList.length > 0) {
                     for (const index in this.homeIdList) {
-                        tibberAPICaller.updatePricesToday(this.homeIdList[index]);
-                        tibberAPICaller.updatePricesTomorrow(this.homeIdList[index]);
+                        try {
+                            tibberAPICaller.updatePricesToday(this.homeIdList[index]);
+                        }
+                        catch (error) {
+                            this.log.warn(tibberAPICaller.generateErrorMessage(error, "Abruf 'Preise von heute'"));
+                        }
+                        try {
+                            tibberAPICaller.updatePricesTomorrow(this.homeIdList[index]);
+                        }
+                        catch (error) {
+                            this.log.warn(tibberAPICaller.generateErrorMessage(error, "Abruf 'Preise von morgen'"));
+                        }
                     }
                 }
             }, 300000);
