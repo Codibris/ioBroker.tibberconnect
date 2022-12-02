@@ -1,7 +1,7 @@
 {
 	"common": {
 		"name": "tibberconnect",
-		"version": "0.0.7",
+		"version": "0.0.8",
 		"news": {
 			"0.0.1": {
 				"en": "initial release",
@@ -30,6 +30,10 @@
 			"0.0.7": {
 				"en": "prepare breaking chage tibber API and show connection state",
 				"de": "Verwendung der neuen Tibber API Version und Anzeige des Versbindungsstatus"
+			},
+			"0.0.8": {
+				"en": "Eine Verbesserungen im Fehlerhandling beim API Abruf wurden vorgenommen",
+				"de": "add some error handling while api calls"
 			}
 		},
 		"title": "Tibber Connect",
