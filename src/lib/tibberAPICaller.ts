@@ -96,6 +96,17 @@ export class TibberAPICaller extends TibberHelper {
 		return homeIdList;
 	}
 
+	public generateErrorMessage(error: any, context: string): string {
+		let errorMessages = "";
+		for (const index in error.errors) {
+			if (errorMessages) {
+				errorMessages += ", ";
+			}
+			errorMessages += error.errors[index].message;
+		}
+		return "Fehler (" + error.statusMessage + ") bei Vorgang: " + context + ": " + errorMessages;
+	}
+
 	async updateCurrentPrice(homeId: string): Promise<void> {
 		if (homeId) {
 			const currentPrice = await this.tibberQuery.getCurrentEnergyPrice(homeId);
