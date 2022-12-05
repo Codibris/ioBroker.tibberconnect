@@ -2,8 +2,8 @@
 
 # ioBroker.tibberconnect
 
-[![NPM version](https://img.shields.io/npm/v/iobroker.tibberconnect.svg)](https://www.npmjs.com/package/iobroker.tibberconnect)
-[![Downloads](https://img.shields.io/npm/dm/iobroker.tibberconnect.svg)](https://www.npmjs.com/package/iobroker.tibberconnect)
+![![NPM version](https://img.shields.io/npm/v/iobroker.tibberconnect.svg)](https://www.npmjs.com/package/iobroker.tibberconnect)
+![![Downloads](https://img.shields.io/npm/dm/iobroker.tibberconnect.svg)](https://www.npmjs.com/package/iobroker.tibberconnect)
 ![Number of Installations](https://iobroker.live/badges/tibberconnect-installed.svg)
 ![Current version in stable repository](https://iobroker.live/badges/tibberconnect-stable.svg)
 [![Dependency Status](https://img.shields.io/david/Codibris/iobroker.tibberconnect.svg)](https://david-dm.org/Codibris/iobroker.tibberconnect)
@@ -11,6 +11,11 @@
 [![NPM](https://nodei.co/npm/iobroker.tibberconnect.png?downloads=true)](https://nodei.co/npm/iobroker.tibberconnect/)
 
 **Tests:** ![Test and Release](https://github.com/Codibris/ioBroker.tibberconnect/workflows/Test%20and%20Release/badge.svg)
+
+Willkommen beim ioBroker Adapter für Tibber. Ich freue mich, dass Du diesen Adapter einsetzen möchtest. 
+Falls du noch zu Tibber wechseln und mich dabei mit unterstützen möchstest kannst Du gerne meinen Einladungslink verwenden:
+
+https://invite.tibber.com/hgg53izs
 
 ## tibberconnect adapter for ioBroker
 
