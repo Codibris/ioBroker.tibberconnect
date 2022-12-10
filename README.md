@@ -24,6 +24,8 @@ connects tibber API and ioBroker
 ## Changelog
 ## **WORK IN PROGRESS**
 - try automatically reconnecting websocket connection (pulse data) in 5s interval
+- add some technical improvements on api calls
+- add some debug logs 
 
 ### 0.0.8 (2022-12-02)
 - add some error handling while api calls
