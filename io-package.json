@@ -1,7 +1,7 @@
 {
 	"common": {
 		"name": "tibberconnect",
-		"version": "0.0.8",
+		"version": "0.0.9",
 		"news": {
 			"0.0.1": {
 				"en": "initial release",
@@ -34,6 +34,10 @@
 			"0.0.8": {
 				"en": "Eine Verbesserungen im Fehlerhandling beim API Abruf wurden vorgenommen",
 				"de": "add some error handling while api calls"
+			},
+			"0.0.9": {
+				"en": "Automatische Neuverbindung im 5 Sek Interval (Pulse), wenn Verbindung unterbrochen wurde",
+				"de": "try automatically reconnecting websocket connection (pulse data) in 5s interval"
 			}
 		},
 		"title": "Tibber Connect",
