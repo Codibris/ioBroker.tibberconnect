@@ -9,15 +9,21 @@ class TibberPulse extends tibberHelper_1.TibberHelper {
         this.tibberConfig = tibberConfig;
         this.tibberQuery = new tibber_api_1.TibberQuery(this.tibberConfig);
         this.tibberFeed = new tibber_api_1.TibberFeed(this.tibberQuery);
+        this.httpQueryUrl = tibberConfig.apiEndpoint.queryUrl;
+        this.addEventHandlerOnFeed(this.tibberFeed);
     }
     ConnectPulseStream() {
         try {
+            const currentUrl = new URL(this.tibberConfig.apiEndpoint.queryUrl);
+            // reset Query URL if protocol is not "http" (websocket url already set - needed for auto reconnect)
+            if (currentUrl.protocol != "http") {
+                this.tibberConfig.apiEndpoint.queryUrl = this.httpQueryUrl;
+            }
             this.adapter.log.debug("Ermittle Websocket URL für TibberFeed");
             this.tibberQuery.getWebsocketSubscriptionUrl().then((url) => {
                 this.tibberConfig.apiEndpoint.queryUrl = url.href;
                 this.adapter.log.debug("Websocket URL ermittelt: " + url.href);
             });
-            this.addEventHandlerOnFeed(this.tibberFeed);
             this.tibberFeed.connect();
         }
         catch (e) {
@@ -44,6 +50,10 @@ class TibberPulse extends tibberHelper_1.TibberHelper {
         currentFeed.on("disconnected", (data) => {
             this.adapter.log.debug("Tibber Feed: " + data.toString());
             this.adapter.setState("info.connection", false, true);
+            if (this.adapter.config.FeedActive) {
+                this.adapter.log.info("Feed was disconnected. I try to reconnect in 5s");
+                this.reconnect();
+            }
         });
         // Add Error Handler on connection
         currentFeed.on("error", (e) => {
@@ -83,6 +93,18 @@ class TibberPulse extends tibberHelper_1.TibberHelper {
             this.checkAndSetValueNumber(this.getStatePrefix(this.tibberConfig.homeId, objectDestination, "currentL3"), liveMeasurement.currentL3, "Current on L3; on Kaifa and Aidon meters the value is not part of every HAN data frame therefore the value is null at timestamps with second value other than 0, 10, 20, 30, 40, 50. There can be other deviations based on concrete meter firmware.");
             this.checkAndSetValueNumber(this.getStatePrefix(this.tibberConfig.homeId, objectDestination, "signalStrength"), liveMeasurement.signalStrength, "Device signal strength (Pulse - dB; Watty - percent)");
         }
+    }
+    reconnect() {
+        const reconnectionInterval = this.adapter.setInterval(() => {
+            if (!this.tibberFeed.connected) {
+                this.adapter.log.debug("Try reconnecting now!");
+                this.ConnectPulseStream();
+            }
+            else {
+                this.adapter.log.debug("Reconnect successful! Interval not necessary.");
+                this.adapter.clearInterval(reconnectionInterval);
+            }
+        }, 5000);
     }
 }
 exports.TibberPulse = TibberPulse;

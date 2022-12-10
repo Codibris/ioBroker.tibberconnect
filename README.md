@@ -22,6 +22,9 @@ https://invite.tibber.com/hgg53izs
 connects tibber API and ioBroker
 
 ## Changelog
+## **WORK IN PROGRESS**
+- try automatically reconnecting websocket connection (pulse data) in 5s interval
+
 ### 0.0.8 (2022-12-02)
 - add some error handling while api calls
 

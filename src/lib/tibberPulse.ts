@@ -7,22 +7,29 @@ export class TibberPulse extends TibberHelper {
 	tibberConfig: IConfig;
 	tibberQuery: TibberQuery;
 	tibberFeed: TibberFeed;
+	httpQueryUrl: string;
 
 	constructor(tibberConfig: IConfig, adapter: utils.AdapterInstance) {
 		super(adapter);
 		this.tibberConfig = tibberConfig;
 		this.tibberQuery = new TibberQuery(this.tibberConfig);
 		this.tibberFeed = new TibberFeed(this.tibberQuery);
+		this.httpQueryUrl = tibberConfig.apiEndpoint.queryUrl;
+		this.addEventHandlerOnFeed(this.tibberFeed);
 	}
 
 	ConnectPulseStream(): void {
 		try {
+			const currentUrl = new URL(this.tibberConfig.apiEndpoint.queryUrl);
+			// reset Query URL if protocol is not "http" (websocket url already set - needed for auto reconnect)
+			if (currentUrl.protocol != "http") {
+				this.tibberConfig.apiEndpoint.queryUrl = this.httpQueryUrl;
+			}
 			this.adapter.log.debug("Ermittle Websocket URL für TibberFeed");
 			this.tibberQuery.getWebsocketSubscriptionUrl().then((url) => {
 				this.tibberConfig.apiEndpoint.queryUrl = url.href;
 				this.adapter.log.debug("Websocket URL ermittelt: " + url.href);
 			});
-			this.addEventHandlerOnFeed(this.tibberFeed);
 			this.tibberFeed.connect();
 		} catch (e) {
 			this.adapter.log.warn("Error on connect Feed:" + (e as Error).message);
@@ -51,6 +58,10 @@ export class TibberPulse extends TibberHelper {
 		currentFeed.on("disconnected", (data) => {
 			this.adapter.log.debug("Tibber Feed: " + data.toString());
 			this.adapter.setState("info.connection", false, true);
+			if (this.adapter.config.FeedActive) {
+				this.adapter.log.info("Feed was disconnected. I try to reconnect in 5s");
+				this.reconnect();
+			}
 		});
 
 		// Add Error Handler on connection
@@ -195,5 +206,17 @@ export class TibberPulse extends TibberHelper {
 				"Device signal strength (Pulse - dB; Watty - percent)",
 			);
 		}
+	}
+
+	private reconnect(): void {
+		const reconnectionInterval = this.adapter.setInterval(() => {
+			if (!this.tibberFeed.connected) {
+				this.adapter.log.debug("Try reconnecting now!");
+				this.ConnectPulseStream();
+			} else {
+				this.adapter.log.debug("Reconnect successful! Interval not necessary.");
+				this.adapter.clearInterval(reconnectionInterval);
+			}
+		}, 5000);
 	}
 }
