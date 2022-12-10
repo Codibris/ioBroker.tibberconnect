@@ -84,19 +84,19 @@ class Tibberconnect extends utils.Adapter {
 			if (this.homeIdList.length > 0) {
 				for (const index in this.homeIdList) {
 					try {
-						tibberAPICaller.updateCurrentPrice(this.homeIdList[index]);
+						await tibberAPICaller.updateCurrentPrice(this.homeIdList[index]);
 					} catch (error: any) {
 						this.log.warn(tibberAPICaller.generateErrorMessage(error, "Abruf 'Aktueller Preis'"));
 					}
 
 					try {
-						tibberAPICaller.updatePricesToday(this.homeIdList[index]);
+						await tibberAPICaller.updatePricesToday(this.homeIdList[index]);
 					} catch (error: any) {
 						this.log.warn(tibberAPICaller.generateErrorMessage(error, "Abruf 'Preise von heute'"));
 					}
 
 					try {
-						tibberAPICaller.updatePricesTomorrow(this.homeIdList[index]);
+						await tibberAPICaller.updatePricesTomorrow(this.homeIdList[index]);
 					} catch (error: any) {
 						this.log.warn(tibberAPICaller.generateErrorMessage(error, "Abruf 'Preise von morgen'"));
 					}
@@ -115,7 +115,7 @@ class Tibberconnect extends utils.Adapter {
 			}, 300000);
 			this.intervallList.push(energyPriceCallIntervall);
 
-			const energyPricesListUpdateIntervall = this.setInterval(() => {
+			const energyPricesListUpdateInterval = this.setInterval(() => {
 				if (this.homeIdList.length > 0) {
 					for (const index in this.homeIdList) {
 						try {
@@ -132,7 +132,7 @@ class Tibberconnect extends utils.Adapter {
 					}
 				}
 			}, 300000);
-			this.intervallList.push(energyPricesListUpdateIntervall);
+			this.intervallList.push(energyPricesListUpdateInterval);
 
 			// If User uses TibberConfig - start connection
 			if (this.config.FeedActive) {
