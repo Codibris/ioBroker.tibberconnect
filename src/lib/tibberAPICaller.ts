@@ -20,6 +20,7 @@ export class TibberAPICaller extends TibberHelper {
 
 	async updateHomesFromAPI(): Promise<string[]> {
 		const currentHomes = await this.tibberQuery.getHomes();
+		this.adapter.log.debug("Get homes from tibber api: " + JSON.stringify(currentHomes));
 		const homeIdList: string[] = [];
 		for (const homeIndex in currentHomes) {
 			const currentHome = currentHomes[homeIndex];
@@ -110,6 +111,7 @@ export class TibberAPICaller extends TibberHelper {
 	async updateCurrentPrice(homeId: string): Promise<void> {
 		if (homeId) {
 			const currentPrice = await this.tibberQuery.getCurrentEnergyPrice(homeId);
+			this.adapter.log.debug("Get current price from tibber api: " + JSON.stringify(currentPrice));
 			this.currentHomeId = homeId;
 			await this.fetchPrice("CurrentPrice", currentPrice);
 		}
@@ -117,6 +119,7 @@ export class TibberAPICaller extends TibberHelper {
 
 	async updatePricesToday(homeId: string): Promise<void> {
 		const pricesToday = await this.tibberQuery.getTodaysEnergyPrices(homeId);
+		this.adapter.log.debug("Get prices today from tibber api: " + JSON.stringify(pricesToday));
 		this.currentHomeId = homeId;
 		for (const index in pricesToday) {
 			const price = pricesToday[index];
@@ -127,6 +130,7 @@ export class TibberAPICaller extends TibberHelper {
 
 	async updatePricesTomorrow(homeId: string): Promise<void> {
 		const pricesTomorrow = await this.tibberQuery.getTomorrowsEnergyPrices(homeId);
+		this.adapter.log.debug("Get prices tomorrow from tibber api: " + JSON.stringify(pricesTomorrow));
 		this.currentHomeId = homeId;
 		for (const index in pricesTomorrow) {
 			const price = pricesTomorrow[index];
