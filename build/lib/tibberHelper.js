@@ -26,7 +26,7 @@ class TibberHelper {
                 },
                 native: {},
             });
-            await this.adapter.setStateAsync(stateName.value, value);
+            await this.adapter.setStateAsync(stateName.value, value, true);
         }
     }
     async checkAndSetValueNumber(stateName, value, description) {
@@ -43,7 +43,7 @@ class TibberHelper {
                 },
                 native: {},
             });
-            await this.adapter.setStateAsync(stateName.value, value);
+            await this.adapter.setStateAsync(stateName.value, value, true);
         }
     }
     async checkAndSetValueBoolean(stateName, value, description) {
@@ -60,7 +60,7 @@ class TibberHelper {
                 },
                 native: {},
             });
-            await this.adapter.setStateAsync(stateName.value, value);
+            await this.adapter.setStateAsync(stateName.value, value, true);
         }
     }
 }
