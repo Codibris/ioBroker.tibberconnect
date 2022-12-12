@@ -40,5 +40,5 @@
 		"watch": false
 	},
 	"include": ["src/**/*.ts", "admin/**/*.ts", "admin/**/*.tsx"],
-	"exclude": ["build/**", "node_modules/**"]
+	"exclude": ["build/**", "node_modules/**", ".dev-server/**"]
 }

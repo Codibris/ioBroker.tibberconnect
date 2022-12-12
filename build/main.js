@@ -29,6 +29,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 // The adapter-core module gives you access to the core ioBroker functions
 // you need to create an adapter
 const utils = __importStar(require("@iobroker/adapter-core"));
+const luxon_1 = require("luxon");
 const tibberAPICaller_1 = require("./lib/tibberAPICaller");
 const tibberPulse_1 = require("./lib/tibberPulse");
 // Load your modules here, e.g.:
@@ -40,6 +41,9 @@ class Tibberconnect extends utils.Adapter {
             name: "tibberconnect",
         });
         this.queryUrl = "";
+        this.sortNumeric = (dir) => {
+            return (a, b) => (a - b) * dir;
+        };
         this.on("ready", this.onReady.bind(this));
         this.on("stateChange", this.onStateChange.bind(this));
         // this.on("objectChange", this.onObjectChange.bind(this));
@@ -235,6 +239,7 @@ class Tibberconnect extends utils.Adapter {
                     }
                 }
             }
+            this.subscribeStates('*.Calculations.GetBestTime');
         }
     }
     /**
@@ -261,14 +266,226 @@ class Tibberconnect extends utils.Adapter {
     /**
      * Is called if a subscribed state changes
      */
-    onStateChange(id, state) {
+    async onStateChange(id, state) {
+        var _a, _b;
         if (state) {
-            // The state was changed
-            this.log.info(`state ${id} changed: ${state.val} (ack = ${state.ack})`);
+            if (id.startsWith(this.namespace) && id.endsWith('.Calculations.GetBestTime') && state.val === true) {
+                //const homeId = id.substring(this.namespace.length + 7, id.indexOf('.Calculations.GetBestTime'))
+                const nameSpaceWithHomeId = id.substring(0, id.indexOf('.Calculations.GetBestTime'))
+                    .replace('.Calculations.GetBestTime', '');
+                try {
+                    const [Duration, LastEnd] = await Promise.all([
+                        this.getStateAsync(nameSpaceWithHomeId + '.Calculations.Duration'),
+                        this.getStateAsync(nameSpaceWithHomeId + '.Calculations.LastEnd'),
+                        this.setStateAsync(nameSpaceWithHomeId + '.Calculations.CronString', {
+                            val: '',
+                            ack: true
+                        }),
+                        this.setStateAsync(nameSpaceWithHomeId + '.Calculations.BestStart', {
+                            val: '',
+                            ack: true
+                        })
+                    ]);
+                    const duration = (_a = Number(Duration === null || Duration === void 0 ? void 0 : Duration.val)) !== null && _a !== void 0 ? _a : 0;
+                    const lastEnd = (_b = String(LastEnd === null || LastEnd === void 0 ? void 0 : LastEnd.val)) !== null && _b !== void 0 ? _b : "";
+                    let [result, lows, highs] = await this.get_best_timeslot(nameSpaceWithHomeId, duration, lastEnd);
+                    // The state was changed
+                    //this.log.info('string: ' + this.namespace + '.calculations.GetBestTime');
+                    this.log.debug('Duration: ' + (Duration === null || Duration === void 0 ? void 0 : Duration.val) + ', LastEnd: ' + (LastEnd === null || LastEnd === void 0 ? void 0 : LastEnd.val) + ', result: ' + result);
+                    this.log.debug('stringified result: ' + JSON.stringify(result));
+                    await Promise.all([
+                        this.setStateAsync(nameSpaceWithHomeId + '.Calculations.Duration', {
+                            ack: true
+                        }),
+                        this.setStateAsync(nameSpaceWithHomeId + '.Calculations.LastEnd', {
+                            val: luxon_1.DateTime.fromISO(lastEnd).toISO(),
+                            ack: true
+                        }),
+                        this.setStateAsync(nameSpaceWithHomeId + '.Calculations.Feedback', {
+                            val: JSON.stringify(result),
+                            ack: true
+                        }),
+                        this.setStateAsync(nameSpaceWithHomeId + '.Calculations.Lows', {
+                            val: JSON.stringify(lows),
+                            ack: true
+                        }),
+                        this.setStateAsync(nameSpaceWithHomeId + '.Calculations.Highs', {
+                            val: JSON.stringify(highs),
+                            ack: true
+                        })
+                    ]);
+                    let now = luxon_1.DateTime.now();
+                    let day = now.day;
+                    if (now.hour > result[0]) {
+                        now = now.plus({ days: 1 });
+                    }
+                    let BestStart = luxon_1.DateTime.fromObject({
+                        year: now.year,
+                        month: now.month,
+                        day: now.day,
+                        hour: result[0]
+                    });
+                    await this.setStateAsync(nameSpaceWithHomeId + '.Calculations.BestStart', {
+                        val: BestStart.toISO(),
+                        ack: true
+                    });
+                    let startdate = luxon_1.DateTime.fromObject({
+                        year: now.year,
+                        month: now.month,
+                        day: day
+                    });
+                    let cron = ['{"time":{"exactTime":true,"start":"', BestStart.hour, ':00"},"period":{"once":"', startdate, '"}}'].join('');
+                    await this.setStateAsync(nameSpaceWithHomeId + '.Calculations.CronString', {
+                        val: cron,
+                        ack: true
+                    });
+                }
+                catch (error) {
+                    this.log.error(error);
+                }
+                finally {
+                    await this.setStateAsync(nameSpaceWithHomeId + '.Calculations.GetBestTime', {
+                        val: false,
+                        ack: true
+                    });
+                }
+            }
+            else {
+                // The state was changed
+                this.log.info(`state ${id} changed: ${state.val} (ack = ${state.ack})`);
+            }
         }
         else {
             // The state was deleted
             this.log.info(`state ${id} deleted`);
+        }
+    }
+    async get_best_timeslot(namespaceWithHomeId, hours, LastEnd) {
+        //todo: integration usage of "firstStart"
+        //todo: rename hours to Duration
+        try {
+            if (!luxon_1.DateTime.fromISO(LastEnd).isValid) {
+                let ErrorMsg = 'Entry provided for LastEnd is no valid formatted Date (expect ISO 8601 string). LastEnd: ' + LastEnd;
+                await this.setStateAsync(namespaceWithHomeId + '.Calculations.Feedback', {
+                    val: 'Error: ' + ErrorMsg,
+                    ack: true
+                });
+                throw new Error(ErrorMsg);
+            }
+            if (!Number.isInteger(hours)) {
+                let ErrorMsg = 'Entry provided for Duration is no integer. Duration: ' + hours;
+                await this.setStateAsync(namespaceWithHomeId + '.Calculations.Feedback', {
+                    val: 'Error: ' + ErrorMsg,
+                    ack: true
+                });
+                throw new Error(ErrorMsg);
+            }
+            let now = luxon_1.DateTime.now();
+            let LastEndDate = luxon_1.DateTime.fromISO(LastEnd);
+            let ErrorMsg = '';
+            if (LastEndDate < now) {
+                ErrorMsg = 'Entry provided for LastEnd in the past. LastEnd: ' + LastEnd;
+            }
+            let diff = (LastEndDate.toMillis() - now.toMillis());
+            let diff_hours = Math.floor(diff / (1000 * 60 * 60));
+            if (now.hour < 13 && (diff_hours + now.hour > 23)) {
+                ErrorMsg = 'LastEnd too far in future - price data for tomorrow only available after 1pm today. LastEnd: ' + LastEnd;
+            }
+            if (diff_hours + now.hour > 47) {
+                ErrorMsg = 'LastEnd to far in future - price data only available until tomorrow midnight. LastEnd: ' + LastEnd;
+            }
+            if (now.plus({ hours: hours }) >= LastEndDate) {
+                ErrorMsg = 'LastEnd too soon for given duration. LastEnd: ' + LastEnd + ', duration: ' + hours;
+            }
+            if (ErrorMsg !== '') {
+                this.log.error(ErrorMsg);
+                await this.setStateAsync(namespaceWithHomeId + '.Calculations.Feedback', {
+                    val: 'Error: ' + ErrorMsg,
+                    ack: true
+                });
+                throw new Error(ErrorMsg);
+            }
+            let current_hour = now.hour;
+            let maxhour = LastEndDate.hour + 24 * (LastEndDate.day - now.day - 1);
+            let Preise = [];
+            let state = null;
+            if (now.day < LastEndDate.day || now.month < LastEndDate.month || now.year < LastEndDate.month) {
+                let i_inc = 1;
+                if ((current_hour + 1) > 23) {
+                    i_inc = -i_inc;
+                }
+                for (let i = (current_hour + 1); i_inc >= 0 ? i <= 23 : i >= 23; i += i_inc) {
+                    state = await this.getStateAsync(namespaceWithHomeId + '.PricesToday.' + i + '.total');
+                    if (state === null || state === void 0 ? void 0 : state.val)
+                        Preise.push(Number(state === null || state === void 0 ? void 0 : state.val));
+                }
+                let i_inc2 = 1;
+                if (0 > maxhour) {
+                    i_inc2 = -i_inc2;
+                }
+                for (let i = 0; i_inc2 >= 0 ? i < maxhour : i >= maxhour; i += i_inc2) {
+                    state = await this.getStateAsync(namespaceWithHomeId + '.PricesTomorrow.' + i + '.total');
+                    if (state === null || state === void 0 ? void 0 : state.val)
+                        Preise.push(Number(state === null || state === void 0 ? void 0 : state.val));
+                }
+            }
+            else {
+                let i_inc3 = 1;
+                if ((current_hour + 1) > maxhour) {
+                    i_inc3 = -i_inc3;
+                }
+                for (let i = (current_hour + 1); i_inc3 >= 0 ? i < maxhour : i >= maxhour; i += i_inc3) {
+                    state = await this.getStateAsync(namespaceWithHomeId + '.PricesToday.' + i + '.total');
+                    if (state === null || state === void 0 ? void 0 : state.val)
+                        Preise.push(Number(state === null || state === void 0 ? void 0 : state.val));
+                }
+            }
+            this.log.debug("Preise : " + JSON.stringify(Preise));
+            let mins = [], last = Number.MAX_SAFE_INTEGER;
+            for (let i = 0; i < Preise.length - 1; i++) {
+                if (last > Preise[i] && Preise[i + 1] > Preise[i]) {
+                    mins.push((current_hour + i + 1) % 24);
+                    last = Preise[i];
+                }
+            }
+            if (Preise[Preise.length - 1] < Preise[Preise.length - 2]) {
+                mins.push((current_hour + Preise.length) % 24);
+            }
+            let highs = [];
+            last = Number.MIN_SAFE_INTEGER;
+            for (let i = 0; i < Preise.length - 1; i++) {
+                if (last < Preise[i] && Preise[i + 1] < Preise[i]) {
+                    highs.push((current_hour + i + 1) % 24);
+                    last = Preise[i];
+                }
+            }
+            if (Preise[Preise.length - 1] > Preise[Preise.length - 2]) {
+                highs.push((current_hour + Preise.length) % 24);
+            }
+            let prices_sorted = Preise.slice().sort(this.sortNumeric(1));
+            let best_hours_today = [], best_hours_tomorrow = [];
+            for (let count = 0; count < hours; count++) {
+                let low = prices_sorted.shift();
+                if (low) {
+                    let low_hour = (current_hour + Preise.indexOf(low) + 1);
+                    if (low_hour < 24)
+                        best_hours_today.push(low_hour);
+                    else
+                        best_hours_tomorrow.push(low_hour - 24);
+                }
+            }
+            const best_hours = best_hours_today.slice().sort(this.sortNumeric(1));
+            best_hours.push(...(best_hours_tomorrow.sort(this.sortNumeric(1))));
+            return [
+                best_hours,
+                mins,
+                highs
+            ];
+        }
+        catch (error) {
+            error = 'error during calculation of best hours: ' + error;
+            this.log.error(error);
+            throw new Error(error);
         }
     }
     async checkAndSetStateStringFromAPI(name, value, displayName) {

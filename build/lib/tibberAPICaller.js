@@ -21,16 +21,26 @@ class TibberAPICaller extends tibberHelper_1.TibberHelper {
             // Set HomeId in tibberConfig for further API Calls
             this.tibberConfig.homeId = this.currentHomeId;
             // Home GENERAL
-            this.checkAndSetValue(this.getStatePrefix(this.currentHomeId, "General", "Id"), currentHome.id, "ID of your home");
-            this.checkAndSetValue(this.getStatePrefix(this.currentHomeId, "General", "Timezone"), currentHome.timeZone, "The time zone the home resides in");
-            this.checkAndSetValue(this.getStatePrefix(this.currentHomeId, "General", "NameInApp"), currentHome.appNickname, "The nickname given to the home by the user");
-            this.checkAndSetValue(this.getStatePrefix(this.currentHomeId, "General", "AvatarInApp"), currentHome.appAvatar, "The chosen avatar for the home"); // Values: APARTMENT, ROWHOUSE, FLOORHOUSE1, FLOORHOUSE2, FLOORHOUSE3, COTTAGE, CASTLE
-            this.checkAndSetValue(this.getStatePrefix(this.currentHomeId, "General", "Type"), currentHome.type, "The type of home."); // Values: APARTMENT, ROWHOUSE, HOUSE, COTTAGE
-            this.checkAndSetValue(this.getStatePrefix(this.currentHomeId, "General", "PrimaryHeatingSource"), currentHome.primaryHeatingSource, "The primary form of heating in the household"); // Values: AIR2AIR_HEATPUMP, ELECTRICITY, GROUND, DISTRICT_HEATING, ELECTRIC_BOILER, AIR2WATER_HEATPUMP, OTHER
-            this.checkAndSetValueNumber(this.getStatePrefix(this.currentHomeId, "General", "Size"), currentHome.size, "The size of the home in square meters");
-            this.checkAndSetValueNumber(this.getStatePrefix(this.currentHomeId, "General", "NumberOfResidents"), currentHome.numberOfResidents, "The number of people living in the home");
-            this.checkAndSetValueNumber(this.getStatePrefix(this.currentHomeId, "General", "MainFuseSize"), currentHome.mainFuseSize, "The main fuse size");
-            this.checkAndSetValueBoolean(this.getStatePrefix(this.currentHomeId, "General", "HasVentilationSystem"), currentHome.hasVentilationSystem, "Whether the home has a ventilation system");
+            await Promise.all([
+                this.checkAndSetValue(this.getStatePrefix(this.currentHomeId, "General", "Id"), currentHome.id, "ID of your home"),
+                this.checkAndSetValue(this.getStatePrefix(this.currentHomeId, "General", "Timezone"), currentHome.timeZone, "The time zone the home resides in"),
+                this.checkAndSetValue(this.getStatePrefix(this.currentHomeId, "General", "NameInApp"), currentHome.appNickname, "The nickname given to the home by the user"),
+                this.checkAndSetValue(this.getStatePrefix(this.currentHomeId, "General", "AvatarInApp"), currentHome.appAvatar, "The chosen avatar for the home"),
+                this.checkAndSetValue(this.getStatePrefix(this.currentHomeId, "General", "Type"), currentHome.type, "The type of home."),
+                this.checkAndSetValue(this.getStatePrefix(this.currentHomeId, "General", "PrimaryHeatingSource"), currentHome.primaryHeatingSource, "The primary form of heating in the household"),
+                this.checkAndSetValueNumber(this.getStatePrefix(this.currentHomeId, "General", "Size"), currentHome.size, "The size of the home in square meters"),
+                this.checkAndSetValueNumber(this.getStatePrefix(this.currentHomeId, "General", "NumberOfResidents"), currentHome.numberOfResidents, "The number of people living in the home"),
+                this.checkAndSetValueNumber(this.getStatePrefix(this.currentHomeId, "General", "MainFuseSize"), currentHome.mainFuseSize, "The main fuse size"),
+                this.checkAndSetValueBoolean(this.getStatePrefix(this.currentHomeId, "General", "HasVentilationSystem"), currentHome.hasVentilationSystem, "Whether the home has a ventilation system"),
+                this.checkAndSetValueBoolean(this.getStatePrefix(this.currentHomeId, "Calculations", "GetBestTime"), false, "Start timestamp"),
+                this.checkAndSetValue(this.getStatePrefix(this.currentHomeId, "Calculations", "BestStart"), "", "Start timestamp"),
+                this.checkAndSetValue(this.getStatePrefix(this.currentHomeId, "Calculations", "CronString"), "", "Cron String"),
+                this.checkAndSetValue(this.getStatePrefix(this.currentHomeId, "Calculations", "Lows"), "", "Cron String"),
+                this.checkAndSetValue(this.getStatePrefix(this.currentHomeId, "Calculations", "Highs"), "", "Cron String"),
+                this.checkAndSetValueNumber(this.getStatePrefix(this.currentHomeId, "Calculations", "Duration"), 1, "Duration"),
+                this.checkAndSetValue(this.getStatePrefix(this.currentHomeId, "Calculations", "Feedback"), "", "Feedback of calculation"),
+                this.checkAndSetValue(this.getStatePrefix(this.currentHomeId, "Calculations", "LastEnd"), "", "The last end for calculation"),
+            ]);
             this.fetchAddress("Address", currentHome.address);
             this.fetchLegalEntity("Owner", currentHome.owner);
             // TO DO: currentHome.currentSubscription

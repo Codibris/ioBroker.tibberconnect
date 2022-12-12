@@ -13,7 +13,7 @@ class TibberHelper {
         return statePrefix;
     }
     async checkAndSetValue(stateName, value, description) {
-        if (value) {
+        if (value !== null) {
             await this.adapter.setObjectNotExistsAsync(stateName.value, {
                 type: "state",
                 common: {
@@ -30,7 +30,7 @@ class TibberHelper {
         }
     }
     async checkAndSetValueNumber(stateName, value, description) {
-        if (value) {
+        if (value !== null) {
             await this.adapter.setObjectNotExistsAsync(stateName.value, {
                 type: "state",
                 common: {
@@ -47,7 +47,7 @@ class TibberHelper {
         }
     }
     async checkAndSetValueBoolean(stateName, value, description) {
-        if (value) {
+        if (value !== null) {
             await this.adapter.setObjectNotExistsAsync(stateName.value, {
                 type: "state",
                 common: {
