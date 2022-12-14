@@ -501,7 +501,7 @@ class Tibberconnect extends utils.Adapter {
                 native: {},
             });
 
-            await this.setStateAsync(name, value);
+            await this.setStateAsync(name, value, true);
         }
     }
 
@@ -519,7 +519,7 @@ class Tibberconnect extends utils.Adapter {
                 native: {},
             });
 
-            await this.setStateAsync(name, value);
+            await this.setStateAsync(name, value, true);
         }
     }
 
@@ -536,7 +536,7 @@ class Tibberconnect extends utils.Adapter {
             native: {},
         });
 
-        await this.setStateAsync(name, value);
+        await this.setStateAsync(name, value, true);
     }
 }
 
