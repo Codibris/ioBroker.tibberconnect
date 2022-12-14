@@ -34,7 +34,7 @@ export class TibberHelper {
 				native: {},
 			});
 
-			await this.adapter.setStateAsync(stateName.value, value);
+			await this.adapter.setStateAsync(stateName.value, value, true);
 		}
 	}
 
@@ -57,7 +57,7 @@ export class TibberHelper {
 				native: {},
 			});
 
-			await this.adapter.setStateAsync(stateName.value, value);
+			await this.adapter.setStateAsync(stateName.value, value, true);
 		}
 	}
 
@@ -80,7 +80,7 @@ export class TibberHelper {
 				native: {},
 			});
 
-			await this.adapter.setStateAsync(stateName.value, value);
+			await this.adapter.setStateAsync(stateName.value, value, true);
 		}
 	}
 }
