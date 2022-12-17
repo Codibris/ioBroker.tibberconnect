@@ -224,7 +224,9 @@ class Tibberconnect extends utils.Adapter {
                 }
             }
 
-            this.subscribeStates('*.Calculations.GetBestTime')
+            this.subscribeStates('*.Calculations.GetBestTime');
+            this.subscribeStates('*.Calculations.GetHighs');
+            this.subscribeStates('*.Calculations.GetLows');
         }
     }
 
@@ -406,35 +408,27 @@ class Tibberconnect extends utils.Adapter {
             }
 
             let current_hour = now.hour;
-            let maxhour = LastEndDate.hour + 24 * (LastEndDate.day - now.day - 1)
+            let maxhour = LastEndDate.hour + 24 * (LastEndDate.day - now.day)
 
             let Preise: number[] = []
             let state = null
-            if (now.day < LastEndDate.day || now.month < LastEndDate.month || now.year < LastEndDate.month) {
-                let i_inc = 1;
-                if ((current_hour + 1) > 23) {
-                    i_inc = -i_inc;
-                }
-                for (let i = (current_hour + 1); i_inc >= 0 ? i <= 23 : i >= 23; i += i_inc) {
-                    state = await this.getStateAsync(namespaceWithHomeId + '.PricesToday.' + i + '.total')
-                    if (state?.val) Preise.push(Number(state?.val));
-                }
-                let i_inc2 = 1;
-                if (0 > maxhour) {
-                    i_inc2 = -i_inc2;
-                }
-                for (let i = 0; i_inc2 >= 0 ? i < maxhour : i >= maxhour; i += i_inc2) {
-                    state = await this.getStateAsync(namespaceWithHomeId + '.PricesTomorrow.' + i + '.total')
-                    if (state?.val) Preise.push(Number(state?.val));
-                }
-            } else {
-                let i_inc3 = 1;
-                if ((current_hour + 1) > maxhour) {
-                    i_inc3 = -i_inc3;
-                }
-                for (let i = (current_hour + 1); i_inc3 >= 0 ? i < maxhour : i >= maxhour; i += i_inc3) {
-                    state = await this.getStateAsync(namespaceWithHomeId + '.PricesToday.' + i + '.total');
-                    if (state?.val) Preise.push(Number(state?.val));
+
+            for (let i = (current_hour + 1); i < Math.min(maxhour, 24); i++) {
+                this.log.silly("using today." + i)
+                state = await this.getStateAsync(namespaceWithHomeId + '.PricesToday.' + i + '.total')
+                if (state?.val) Preise.push(Number(state?.val));
+            }
+            if (maxhour >= 24) {
+                for (let i = 0; i < maxhour - 24; i++) {
+                    state = await this.getStateAsync(namespaceWithHomeId + '.PricesTomorrow.' + i + '.startsAt')
+                    if (state) {
+                        const startsAt = Date.parse(<string>state.val)
+                        if (startsAt > LastEndDate.millisecond) {
+                            this.log.silly("using tomorrow." + i)
+                            state = await this.getStateAsync(namespaceWithHomeId + '.PricesTomorrow.' + i + '.total')
+                            if (state?.val) Preise.push(Number(state?.val));
+                        }
+                    }
                 }
             }
             this.log.debug("Preise : " + JSON.stringify(Preise))
@@ -451,7 +445,6 @@ class Tibberconnect extends utils.Adapter {
             }
 
             let highs: number[] = []
-
             last = Number.MIN_SAFE_INTEGER
             for (let i = 0; i < Preise.length - 1; i++) {
                 if (last < Preise[i] && Preise[i + 1] < Preise[i]) {
