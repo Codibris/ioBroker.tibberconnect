@@ -409,28 +409,8 @@ class Tibberconnect extends utils.Adapter {
 
             let current_hour = now.hour;
             let maxhour = LastEndDate.hour + 24 * (LastEndDate.day - now.day)
+            let Preise = await this.get_prices(namespaceWithHomeId, LastEndDate);
 
-            let Preise: number[] = []
-            let state = null
-
-            for (let i = (current_hour + 1); i < Math.min(maxhour, 24); i++) {
-                this.log.silly("using today." + i)
-                state = await this.getStateAsync(namespaceWithHomeId + '.PricesToday.' + i + '.total')
-                if (state?.val) Preise.push(Number(state?.val));
-            }
-            if (maxhour >= 24) {
-                for (let i = 0; i < maxhour - 24; i++) {
-                    state = await this.getStateAsync(namespaceWithHomeId + '.PricesTomorrow.' + i + '.startsAt')
-                    if (state) {
-                        const startsAt = Date.parse(<string>state.val)
-                        if (startsAt > LastEndDate.millisecond) {
-                            this.log.silly("using tomorrow." + i)
-                            state = await this.getStateAsync(namespaceWithHomeId + '.PricesTomorrow.' + i + '.total')
-                            if (state?.val) Preise.push(Number(state?.val));
-                        }
-                    }
-                }
-            }
             this.log.debug("Preise : " + JSON.stringify(Preise))
             let mins = [],
                 last = Number.MAX_SAFE_INTEGER
@@ -478,6 +458,35 @@ class Tibberconnect extends utils.Adapter {
             this.log.error(error)
             throw new Error(error);
         }
+    }
+
+    private async get_prices(namespaceWithHomeId: string, LastEndDate: DateTime) {
+        const now = DateTime.now()
+        let current_hour = now.hour;
+        let maxhour = LastEndDate.hour + 24 * (LastEndDate.day - now.day)
+
+        let prices: number[] = []
+        let state = null
+
+        for (let i = (current_hour + 1); i < Math.min(maxhour, 24); i++) {
+            this.log.silly("using today." + i)
+            state = await this.getStateAsync(namespaceWithHomeId + '.PricesToday.' + i + '.total')
+            if (state?.val) prices.push(Number(state?.val));
+        }
+        if (maxhour >= 24) {
+            for (let i = 0; i < maxhour - 24; i++) {
+                state = await this.getStateAsync(namespaceWithHomeId + '.PricesTomorrow.' + i + '.startsAt')
+                if (state) {
+                    const startsAt = Date.parse(<string>state.val)
+                    if (startsAt > LastEndDate.millisecond) {
+                        this.log.silly("using tomorrow." + i)
+                        state = await this.getStateAsync(namespaceWithHomeId + '.PricesTomorrow.' + i + '.total')
+                        if (state?.val) prices.push(Number(state?.val));
+                    }
+                }
+            }
+        }
+        return prices;
     }
 
     private async checkAndSetStateStringFromAPI(name: string, value: string, displayName: string): Promise<void> {

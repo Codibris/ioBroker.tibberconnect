@@ -1,5 +1,6 @@
 import * as utils from "@iobroker/adapter-core";
 import {IConfig, TibberQuery} from "tibber-api";
+import {PriceLevel} from "tibber-api/lib/src/models/enums/PriceLevel";
 import {IAddress} from "tibber-api/lib/src/models/IAddress";
 import {IContactInfo} from "tibber-api/lib/src/models/IContactInfo";
 import {ILegalEntity} from "tibber-api/lib/src/models/ILegalEntity";
@@ -164,22 +165,54 @@ export class TibberAPICaller extends TibberHelper {
         const pricesToday = await this.tibberQuery.getTodaysEnergyPrices(homeId);
         this.adapter.log.debug("Get prices today from tibber api: " + JSON.stringify(pricesToday));
         this.currentHomeId = homeId;
+        const average: IPrice = {
+            tax: 0,
+            total: 0,
+            startsAt: pricesToday[0].startsAt,
+            homeId,
+            energy: 0,
+            level: PriceLevel.NORMAL
+        }
         for (const index in pricesToday) {
             const price = pricesToday[index];
             const hour = new Date(price.startsAt).getHours();
+            average.tax += price.tax;
+            average.total += price.total;
+            average.energy += price.energy;
             this.fetchPrice("PricesToday." + hour, price);
         }
+
+        average.tax /= pricesToday.length;
+        average.total /= pricesToday.length;
+        average.energy /= pricesToday.length;
+        this.fetchPrice("PricesToday.average", average);
     }
 
     async updatePricesTomorrow(homeId: string): Promise<void> {
         const pricesTomorrow = await this.tibberQuery.getTomorrowsEnergyPrices(homeId);
         this.adapter.log.debug("Get prices tomorrow from tibber api: " + JSON.stringify(pricesTomorrow));
         this.currentHomeId = homeId;
+        const average: IPrice = {
+            tax: 0,
+            total: 0,
+            startsAt: pricesTomorrow[0].startsAt,
+            homeId,
+            energy: 0,
+            level: PriceLevel.NORMAL
+        }
         for (const index in pricesTomorrow) {
             const price = pricesTomorrow[index];
             const hour = new Date(price.startsAt).getHours();
+            average.tax += price.tax;
+            average.total += price.total;
+            average.energy += price.energy;
             this.fetchPrice("PricesTomorrow." + hour, price);
         }
+
+        average.tax /= pricesTomorrow.length;
+        average.total /= pricesTomorrow.length;
+        average.energy /= pricesTomorrow.length;
+        this.fetchPrice("PricesTomorrow.average", average);
     }
 
     private fetchAddress(objectDestination: string, address: IAddress): void {

@@ -409,28 +409,7 @@ class Tibberconnect extends utils.Adapter {
             }
             let current_hour = now.hour;
             let maxhour = LastEndDate.hour + 24 * (LastEndDate.day - now.day);
-            let Preise = [];
-            let state = null;
-            for (let i = (current_hour + 1); i < Math.min(maxhour, 24); i++) {
-                this.log.silly("using today." + i);
-                state = await this.getStateAsync(namespaceWithHomeId + '.PricesToday.' + i + '.total');
-                if (state === null || state === void 0 ? void 0 : state.val)
-                    Preise.push(Number(state === null || state === void 0 ? void 0 : state.val));
-            }
-            if (maxhour >= 24) {
-                for (let i = 0; i < maxhour - 24; i++) {
-                    state = await this.getStateAsync(namespaceWithHomeId + '.PricesTomorrow.' + i + '.startsAt');
-                    if (state) {
-                        const startsAt = Date.parse(state.val);
-                        if (startsAt > LastEndDate.millisecond) {
-                            this.log.silly("using tomorrow." + i);
-                            state = await this.getStateAsync(namespaceWithHomeId + '.PricesTomorrow.' + i + '.total');
-                            if (state === null || state === void 0 ? void 0 : state.val)
-                                Preise.push(Number(state === null || state === void 0 ? void 0 : state.val));
-                        }
-                    }
-                }
-            }
+            let Preise = await this.get_prices(namespaceWithHomeId, LastEndDate);
             this.log.debug("Preise : " + JSON.stringify(Preise));
             let mins = [], last = Number.MAX_SAFE_INTEGER;
             for (let i = 0; i < Preise.length - 1; i++) {
@@ -478,6 +457,34 @@ class Tibberconnect extends utils.Adapter {
             this.log.error(error);
             throw new Error(error);
         }
+    }
+    async get_prices(namespaceWithHomeId, LastEndDate) {
+        const now = luxon_1.DateTime.now();
+        let current_hour = now.hour;
+        let maxhour = LastEndDate.hour + 24 * (LastEndDate.day - now.day);
+        let prices = [];
+        let state = null;
+        for (let i = (current_hour + 1); i < Math.min(maxhour, 24); i++) {
+            this.log.silly("using today." + i);
+            state = await this.getStateAsync(namespaceWithHomeId + '.PricesToday.' + i + '.total');
+            if (state === null || state === void 0 ? void 0 : state.val)
+                prices.push(Number(state === null || state === void 0 ? void 0 : state.val));
+        }
+        if (maxhour >= 24) {
+            for (let i = 0; i < maxhour - 24; i++) {
+                state = await this.getStateAsync(namespaceWithHomeId + '.PricesTomorrow.' + i + '.startsAt');
+                if (state) {
+                    const startsAt = Date.parse(state.val);
+                    if (startsAt > LastEndDate.millisecond) {
+                        this.log.silly("using tomorrow." + i);
+                        state = await this.getStateAsync(namespaceWithHomeId + '.PricesTomorrow.' + i + '.total');
+                        if (state === null || state === void 0 ? void 0 : state.val)
+                            prices.push(Number(state === null || state === void 0 ? void 0 : state.val));
+                    }
+                }
+            }
+        }
+        return prices;
     }
     async checkAndSetStateStringFromAPI(name, value, displayName) {
         if (value) {
