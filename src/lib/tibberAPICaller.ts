@@ -192,27 +192,29 @@ export class TibberAPICaller extends TibberHelper {
         const pricesTomorrow = await this.tibberQuery.getTomorrowsEnergyPrices(homeId);
         this.adapter.log.debug("Get prices tomorrow from tibber api: " + JSON.stringify(pricesTomorrow));
         this.currentHomeId = homeId;
-        const average: IPrice = {
-            tax: 0,
-            total: 0,
-            startsAt: pricesTomorrow[0].startsAt,
-            homeId,
-            energy: 0,
-            level: PriceLevel.NORMAL
-        }
-        for (const index in pricesTomorrow) {
-            const price = pricesTomorrow[index];
-            const hour = new Date(price.startsAt).getHours();
-            average.tax += price.tax;
-            average.total += price.total;
-            average.energy += price.energy;
-            this.fetchPrice("PricesTomorrow." + hour, price);
-        }
+        if (pricesTomorrow.length > 0) {
+            const average: IPrice = {
+                tax: 0,
+                total: 0,
+                startsAt: pricesTomorrow[0].startsAt,
+                homeId,
+                energy: 0,
+                level: PriceLevel.NORMAL
+            }
+            for (const index in pricesTomorrow) {
+                const price = pricesTomorrow[index];
+                const hour = new Date(price.startsAt).getHours();
+                average.tax += price.tax;
+                average.total += price.total;
+                average.energy += price.energy;
+                this.fetchPrice("PricesTomorrow." + hour, price);
+            }
 
-        average.tax /= pricesTomorrow.length;
-        average.total /= pricesTomorrow.length;
-        average.energy /= pricesTomorrow.length;
-        this.fetchPrice("PricesTomorrow.average", average);
+            average.tax /= pricesTomorrow.length;
+            average.total /= pricesTomorrow.length;
+            average.energy /= pricesTomorrow.length;
+            this.fetchPrice("PricesTomorrow.average", average);
+        }
     }
 
     private fetchAddress(objectDestination: string, address: IAddress): void {
