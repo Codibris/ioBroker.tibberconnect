@@ -63,6 +63,23 @@ class TibberHelper {
             await this.adapter.setStateAsync(stateName.value, value, true);
         }
     }
+    async checkAndSetValueButton(stateName, value, description) {
+        if (value !== null) {
+            await this.adapter.setObjectNotExistsAsync(stateName.value, {
+                type: "state",
+                common: {
+                    name: stateName.key,
+                    type: "boolean",
+                    role: "button",
+                    desc: description,
+                    read: false,
+                    write: true,
+                },
+                native: {},
+            });
+            await this.adapter.setStateAsync(stateName.value, value, true);
+        }
+    }
 }
 exports.TibberHelper = TibberHelper;
 //# sourceMappingURL=tibberHelper.js.map

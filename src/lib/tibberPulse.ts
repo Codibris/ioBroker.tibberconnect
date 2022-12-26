@@ -47,7 +47,7 @@ export class TibberPulse extends TibberHelper {
 		this.tibberFeed = new TibberFeed(new TibberQuery(this.tibberConfig));
 	}
 
-	private addEventHandlerOnFeed(currentFeed: TibberFeed) {
+	private addEventHandlerOnFeed(currentFeed: TibberFeed): void {
 		// Set info.connection state
 		currentFeed.on("connected", (data) => {
 			this.adapter.log.debug("Tibber Feed: " + data.toString());

@@ -83,4 +83,28 @@ export class TibberHelper {
 			await this.adapter.setStateAsync(stateName.value, value, true);
 		}
 	}
+
+
+	protected async checkAndSetValueButton(
+		stateName: { [key: string]: string },
+		value: boolean,
+		description?: string,
+	): Promise<void> {
+		if (value !== null) {
+			await this.adapter.setObjectNotExistsAsync(stateName.value, {
+				type: "state",
+				common: {
+					name: stateName.key,
+					type: "boolean",
+					role: "button",
+					desc: description,
+					read: false,
+					write: true,
+				},
+				native: {},
+			});
+
+			await this.adapter.setStateAsync(stateName.value, value, true);
+		}
+	}
 }

@@ -33,7 +33,7 @@ class TibberAPICaller extends tibberHelper_1.TibberHelper {
                 this.checkAndSetValueNumber(this.getStatePrefix(this.currentHomeId, "General", "NumberOfResidents"), currentHome.numberOfResidents, "The number of people living in the home"),
                 this.checkAndSetValueNumber(this.getStatePrefix(this.currentHomeId, "General", "MainFuseSize"), currentHome.mainFuseSize, "The main fuse size"),
                 this.checkAndSetValueBoolean(this.getStatePrefix(this.currentHomeId, "General", "HasVentilationSystem"), currentHome.hasVentilationSystem, "Whether the home has a ventilation system"),
-                this.checkAndSetValueBoolean(this.getStatePrefix(this.currentHomeId, "Calculations", "GetBestTime"), false, "Start timestamp"),
+                this.checkAndSetValueButton(this.getStatePrefix(this.currentHomeId, "Calculations", "GetBestTime"), false, "Start calculate best time"),
                 this.checkAndSetValue(this.getStatePrefix(this.currentHomeId, "Calculations", "BestStart"), "", "Start timestamp"),
                 this.checkAndSetValue(this.getStatePrefix(this.currentHomeId, "Calculations", "CronString"), "", "Cron String"),
                 this.checkAndSetValue(this.getStatePrefix(this.currentHomeId, "Calculations", "Lows"), "", "Cron String"),
@@ -80,7 +80,7 @@ class TibberAPICaller extends tibberHelper_1.TibberHelper {
             startsAt: pricesToday[0].startsAt,
             homeId,
             energy: 0,
-            level: PriceLevel_1.PriceLevel.NORMAL
+            level: PriceLevel_1.PriceLevel.NORMAL,
         };
         for (const index in pricesToday) {
             const price = pricesToday[index];
@@ -105,7 +105,7 @@ class TibberAPICaller extends tibberHelper_1.TibberHelper {
             startsAt: pricesTomorrow[0].startsAt,
             homeId,
             energy: 0,
-            level: PriceLevel_1.PriceLevel.NORMAL
+            level: PriceLevel_1.PriceLevel.NORMAL,
         };
         for (const index in pricesTomorrow) {
             const price = pricesTomorrow[index];
