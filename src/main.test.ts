@@ -1,25 +1,14 @@
-/**
- * This is a dummy TypeScript test file using chai and mocha
- *
- * It's automatically excluded from npm and its build output is excluded from both git and npm.
- * It is advised to test all your modules with accompanying *.test.ts-files
- */
-
-import { expect } from "chai";
+import { utils } from "@iobroker/testing";
 // import { functionToTest } from "./moduleToTest";
+const { adapter, database } = utils.unit.createMocks({});
 
 describe("module to test => function to test", () => {
-	// initializing logic
-	const expected = 5;
-
-	it(`should return ${expected}`, () => {
-		const result = 5;
-		// assign result a value from functionToTest
-		expect(result).to.equal(expected);
-		// or using the should() syntax
-		result.should.equal(expected);
+	afterEach(() => {
+		// The mocks keep track of all method invocations - reset them after each single test
+		adapter.resetMockHistory();
+		// We want to start each test with a fresh database
+		database.clear();
 	});
-	// ... more tests => it
 });
 
 // ... more test suites => describe

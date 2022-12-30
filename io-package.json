@@ -1,7 +1,7 @@
 {
 	"common": {
 		"name": "tibberconnect",
-		"version": "0.0.9",
+		"version": "0.0.10",
 		"news": {
 			"0.0.1": {
 				"en": "initial release",
@@ -32,12 +32,16 @@
 				"de": "Verwendung der neuen Tibber API Version und Anzeige des Versbindungsstatus"
 			},
 			"0.0.8": {
-				"en": "Eine Verbesserungen im Fehlerhandling beim API Abruf wurden vorgenommen",
-				"de": "add some error handling while api calls"
+				"de": "Eine Verbesserungen im Fehlerhandling beim API Abruf wurden vorgenommen",
+				"en": "add some error handling while api calls"
 			},
 			"0.0.9": {
-				"en": "Automatische Neuverbindung im 5 Sek Interval (Pulse), wenn Verbindung unterbrochen wurde",
-				"de": "try automatically reconnecting websocket connection (pulse data) in 5s interval"
+				"de": "Automatische Neuverbindung im 5 Sek Interval (Pulse), wenn Verbindung unterbrochen wurde",
+				"en": "try automatically reconnecting websocket connection (pulse data) in 5s interval"
+			},
+			"0.0.10": {
+				"en": "add \"calculate best time\" based on the work from Magnus8513",
+				"de": "\"Best Time Berechnung\" hinzugefügt. Basiert auf der Arbeit von Magnus8513"
 			}
 		},
 		"title": "Tibber Connect",

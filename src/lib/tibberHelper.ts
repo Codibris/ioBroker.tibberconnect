@@ -20,7 +20,7 @@ export class TibberHelper {
 		value: string,
 		description?: string,
 	): Promise<void> {
-		if (value) {
+		if (value !== null) {
 			await this.adapter.setObjectNotExistsAsync(stateName.value, {
 				type: "state",
 				common: {
@@ -43,7 +43,7 @@ export class TibberHelper {
 		value: number,
 		description?: string,
 	): Promise<void> {
-		if (value) {
+		if (value !== null) {
 			await this.adapter.setObjectNotExistsAsync(stateName.value, {
 				type: "state",
 				common: {
@@ -65,22 +65,34 @@ export class TibberHelper {
 		stateName: { [key: string]: string },
 		value: boolean,
 		description?: string,
+		role = "Boolean",
+		read = true,
+		write = true,
 	): Promise<void> {
-		if (value) {
+		if (value !== null) {
 			await this.adapter.setObjectNotExistsAsync(stateName.value, {
 				type: "state",
 				common: {
 					name: stateName.key,
 					type: "boolean",
-					role: "Boolean",
+					role,
 					desc: description,
-					read: true,
-					write: true,
+					read,
+					write,
 				},
 				native: {},
 			});
 
 			await this.adapter.setStateAsync(stateName.value, value, true);
 		}
+	}
+
+	protected async checkAndSetValueBooleanAsButton(
+		stateName: { [key: string]: string },
+		value: boolean,
+		description?: string,
+	): Promise<void> {
+		return this.checkAndSetValueBoolean(stateName, value, description, 'button', false, true)
+
 	}
 }
