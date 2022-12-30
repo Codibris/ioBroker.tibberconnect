@@ -92,7 +92,6 @@ export class TibberHelper {
 		value: boolean,
 		description?: string,
 	): Promise<void> {
-		return this.checkAndSetValueBoolean(stateName, value, description, 'button', false, true)
-
+		return this.checkAndSetValueBoolean(stateName, value, description, "button", false, true);
 	}
 }

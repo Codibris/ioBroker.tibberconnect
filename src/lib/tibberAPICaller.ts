@@ -143,7 +143,6 @@ export class TibberAPICaller extends TibberHelper {
 		} else {
 			return "Error (" + error.message + ") during: " + context + ":\n" + error.stack;
 		}
-
 	}
 
 	async updateCurrentPrice(homeId: string): Promise<void> {
