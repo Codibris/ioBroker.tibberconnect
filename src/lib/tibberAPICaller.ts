@@ -96,16 +96,6 @@ export class TibberAPICaller extends TibberHelper {
 					"",
 					"Cron String",
 				),
-				this.checkAndSetValue(
-					this.getStatePrefix(this.currentHomeId, "Calculations", "Lows"),
-					"",
-					"Cron String",
-				),
-				this.checkAndSetValue(
-					this.getStatePrefix(this.currentHomeId, "Calculations", "Highs"),
-					"",
-					"Cron String",
-				),
 				this.checkAndSetValueNumber(
 					this.getStatePrefix(this.currentHomeId, "Calculations", "Duration"),
 					1,
