@@ -22,6 +22,18 @@ https://invite.tibber.com/hgg53izs
 connects tibber API and ioBroker
 
 ## Changelog
+### 0.0.10 (2022-12-30)
+- add "calculate best time", based on ioBroker.tibber from Magnus8513
+  - populate the following fields in the calculation channel
+    - Duration : hours as integer that the appliance will run
+    - LastEnd : DateTime as ISO String by when appliance needs to finish latest
+  - set "GetBestTime" to true by script or push the button
+  - Read return from fields when GetBestTime is set back to false (ack)
+    - Feedback: list of best DateTimes or Error Message 
+    - BestStart: DateTime for optimal Start 
+    - CronString: cronstring to schedule start of appliance at BestStart
+- fix exception handling by adding some missing await
+
 ### 0.0.9 (2022-12-10)
 - try automatically reconnecting websocket connection (pulse data) in 5s interval
 - add some technical improvements on api calls

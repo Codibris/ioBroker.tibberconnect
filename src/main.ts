@@ -5,12 +5,15 @@
 // The adapter-core module gives you access to the core ioBroker functions
 // you need to create an adapter
 import * as utils from "@iobroker/adapter-core";
+import { DateTime } from "luxon";
 import { IConfig } from "tibber-api";
 import { TibberAPICaller } from "./lib/tibberAPICaller";
 import { TibberPulse } from "./lib/tibberPulse";
 
-// Load your modules here, e.g.:
-// import * as fs from "fs";
+interface PriceAt {
+	total: number;
+	startsAt: DateTime;
+}
 
 class Tibberconnect extends utils.Adapter {
 	intervallList: ioBroker.Interval[];
@@ -31,6 +34,14 @@ class Tibberconnect extends utils.Adapter {
 		this.intervallList = [];
 		this.queryUrl = "https://api.tibber.com/v1-beta/gql";
 	}
+
+	private sortPriceAtByTotal = (dir: number) => {
+		return (a: PriceAt, b: PriceAt) => (a.total - b.total) * dir;
+	};
+
+	private sortByDateTime = (dir: number) => {
+		return (a: DateTime, b: DateTime) => (a.toMillis() - b.toMillis()) * dir;
+	};
 
 	/**
 	 * Is called when databases are connected and adapter received configuration.
@@ -64,11 +75,11 @@ class Tibberconnect extends utils.Adapter {
 			try {
 				this.homeIdList = await tibberAPICaller.updateHomesFromAPI();
 			} catch (error: any) {
-				this.log.warn(tibberAPICaller.generateErrorMessage(error, "Abruf 'homes'"));
+				this.log.warn(tibberAPICaller.generateErrorMessage(error, "getting 'homes'"));
 			}
 			// if feed is not used - set info.connection if data received
 			if (!this.config.FeedActive) {
-				if (this.homeIdList) {
+				if (this.homeIdList.length > 0) {
 					this.setState("info.connection", true, true);
 					this.log.debug(
 						"Connection Check: Feed not enabled and I received home list from api - good connection",
@@ -81,64 +92,42 @@ class Tibberconnect extends utils.Adapter {
 				}
 			}
 			// Init Load Data for home
-			if (this.homeIdList.length > 0) {
-				for (const index in this.homeIdList) {
+			for (const index in this.homeIdList) {
+				try {
+					await tibberAPICaller.updateCurrentPrice(this.homeIdList[index]);
+				} catch (error: any) {
+					this.log.warn(tibberAPICaller.generateErrorMessage(error, "Abruf 'Aktueller Preis'"));
+				}
+			}
+			for (const homeId of this.homeIdList) {
+				await this.updatePrices(tibberAPICaller, homeId);
+			}
+
+			const energyPriceCallIntervall = this.setInterval(() => {
+				for (const homeId of this.homeIdList) {
 					try {
-						await tibberAPICaller.updateCurrentPrice(this.homeIdList[index]);
+						tibberAPICaller.updateCurrentPrice(homeId);
 					} catch (error: any) {
 						this.log.warn(tibberAPICaller.generateErrorMessage(error, "Abruf 'Aktueller Preis'"));
 					}
-
-					try {
-						await tibberAPICaller.updatePricesToday(this.homeIdList[index]);
-					} catch (error: any) {
-						this.log.warn(tibberAPICaller.generateErrorMessage(error, "Abruf 'Preise von heute'"));
-					}
-
-					try {
-						await tibberAPICaller.updatePricesTomorrow(this.homeIdList[index]);
-					} catch (error: any) {
-						this.log.warn(tibberAPICaller.generateErrorMessage(error, "Abruf 'Preise von morgen'"));
-					}
 				}
-			}
-			const energyPriceCallIntervall = this.setInterval(() => {
-				if (this.homeIdList.length > 0) {
-					for (const index in this.homeIdList) {
-						try {
-							tibberAPICaller.updateCurrentPrice(this.homeIdList[index]);
-						} catch (error: any) {
-							this.log.warn(tibberAPICaller.generateErrorMessage(error, "Abruf 'Aktueller Preis'"));
-						}
-					}
-				}
-			}, 300000);
+			}, 5 * 60 * 1000);
 			this.intervallList.push(energyPriceCallIntervall);
 
-			const energyPricesListUpdateInterval = this.setInterval(() => {
-				if (this.homeIdList.length > 0) {
-					for (const index in this.homeIdList) {
-						try {
-							tibberAPICaller.updatePricesToday(this.homeIdList[index]);
-						} catch (error: any) {
-							this.log.warn(tibberAPICaller.generateErrorMessage(error, "Abruf 'Preise von heute'"));
-						}
-
-						try {
-							tibberAPICaller.updatePricesTomorrow(this.homeIdList[index]);
-						} catch (error: any) {
-							this.log.warn(tibberAPICaller.generateErrorMessage(error, "Abruf 'Preise von morgen'"));
-						}
-					}
+			const energyPricesListUpdateInterval = this.setInterval(async () => {
+				const updates = [];
+				for (const homeId of this.homeIdList) {
+					updates.push(this.updatePrices(tibberAPICaller, homeId));
 				}
-			}, 300000);
+				await Promise.all(updates);
+			}, 5 * 60 * 1000);
 			this.intervallList.push(energyPricesListUpdateInterval);
 
 			// If User uses TibberConfig - start connection
 			if (this.config.FeedActive) {
-				for (const index in this.homeIdList) {
+				for (const homeId of this.homeIdList) {
 					try {
-						tibberConfigFeed.homeId = this.homeIdList[index];
+						tibberConfigFeed.homeId = homeId;
 						// define fields for Datafeed
 						tibberConfigFeed.timestamp = true;
 						tibberConfigFeed.power = true;
@@ -218,6 +207,22 @@ class Tibberconnect extends utils.Adapter {
 					}
 				}
 			}
+
+			this.subscribeStates("*.Calculations.GetBestTime");
+		}
+	}
+
+	private async updatePrices(tibberAPICaller: TibberAPICaller, homeId: string): Promise<void> {
+		try {
+			await tibberAPICaller.updatePricesToday(homeId);
+		} catch (error: any) {
+			this.log.warn(tibberAPICaller.generateErrorMessage(error, "Abruf 'Preise von heute'"));
+		}
+
+		try {
+			await tibberAPICaller.updatePricesTomorrow(homeId);
+		} catch (error: any) {
+			this.log.warn(tibberAPICaller.generateErrorMessage(error, "Abruf 'Preise von morgen'"));
 		}
 	}
 
@@ -247,14 +252,216 @@ class Tibberconnect extends utils.Adapter {
 	/**
 	 * Is called if a subscribed state changes
 	 */
-	private onStateChange(id: string, state: ioBroker.State | null | undefined): void {
+	private async onStateChange(id: string, state: ioBroker.State | null | undefined): Promise<void> {
 		if (state) {
-			// The state was changed
-			this.log.info(`state ${id} changed: ${state.val} (ack = ${state.ack})`);
+			if (id.startsWith(this.namespace) && id.endsWith(".Calculations.GetBestTime") && state.val === true) {
+				const nameSpaceWithHomeId = id.substring(0, id.indexOf(".Calculations.GetBestTime"));
+
+				try {
+					const [Duration, LastEnd] = await Promise.all([
+						this.getStateAsync(nameSpaceWithHomeId + ".Calculations.Duration"),
+						this.getStateAsync(nameSpaceWithHomeId + ".Calculations.LastEnd"),
+						this.setStateAsync(nameSpaceWithHomeId + ".Calculations.CronString", {
+							val: "",
+							ack: true,
+						}),
+						this.setStateAsync(nameSpaceWithHomeId + ".Calculations.BestStart", {
+							val: "",
+							ack: true,
+						}),
+					]);
+
+					const duration = Number(Duration?.val) ?? 0,
+						lastEnd = String(LastEnd?.val) ?? "",
+						result = await this.get_best_timeslot(nameSpaceWithHomeId, duration, lastEnd);
+
+					this.log.debug("Duration: " + Duration?.val + ", LastEnd: " + LastEnd?.val + ", result: " + result);
+
+					await Promise.all([
+						this.setStateAsync(nameSpaceWithHomeId + ".Calculations.Duration", {
+							ack: true,
+						}),
+						this.setStateAsync(nameSpaceWithHomeId + ".Calculations.LastEnd", {
+							val: DateTime.fromISO(lastEnd).toISO(),
+							ack: true,
+						}),
+						this.setStateAsync(nameSpaceWithHomeId + ".Calculations.Feedback", {
+							val: JSON.stringify(result),
+							ack: true,
+						}),
+					]);
+
+					if (result.length > 0) {
+						const BestStart = result[0];
+
+						await this.setStateAsync(nameSpaceWithHomeId + ".Calculations.BestStart", {
+							val: BestStart.toISO(),
+							ack: true,
+						});
+						const startdate = DateTime.fromObject({
+							year: BestStart.year,
+							month: BestStart.month,
+							day: BestStart.day,
+						});
+						const cron = [
+							'{"time":{"exactTime":true,"start":"',
+							BestStart.hour,
+							':00"},"period":{"once":"',
+							startdate,
+							'"}}',
+						].join("");
+						await this.setStateAsync(nameSpaceWithHomeId + ".Calculations.CronString", {
+							val: cron,
+							ack: true,
+						});
+					} else {
+						await this.setStateAsync(nameSpaceWithHomeId + ".Calculations.Feedback", {
+							val: "no results found",
+							ack: true,
+						});
+					}
+				} catch (error: any) {
+					this.log.error(error);
+				} finally {
+					await this.setStateAsync(nameSpaceWithHomeId + ".Calculations.GetBestTime", {
+						val: false,
+						ack: true,
+					});
+				}
+			} else {
+				// The state was changed
+				this.log.silly(`state ${id} changed: ${state.val} (ack = ${state.ack})`);
+			}
 		} else {
 			// The state was deleted
-			this.log.info(`state ${id} deleted`);
+			this.log.debug(`state ${id} deleted`);
 		}
+	}
+
+	private async get_best_timeslot(
+		namespaceWithHomeId: string,
+		duration: number,
+		LastEnd: string,
+	): Promise<DateTime[]> {
+		//todo: integration usage of "firstStart"
+		//todo: rename hours to Duration
+		try {
+			if (!DateTime.fromISO(LastEnd).isValid) {
+				const ErrorMsg =
+					"Entry provided for LastEnd is no valid formatted Date (expect ISO 8601 string). LastEnd: " +
+					LastEnd;
+				await this.setStateAsync(namespaceWithHomeId + ".Calculations.Feedback", {
+					val: "Error: " + ErrorMsg,
+					ack: true,
+				});
+				throw new Error(ErrorMsg);
+			}
+			if (!Number.isInteger(duration)) {
+				const ErrorMsg = "Entry provided for Duration is no integer. Duration: " + duration;
+				await this.setStateAsync(namespaceWithHomeId + ".Calculations.Feedback", {
+					val: "Error: " + ErrorMsg,
+					ack: true,
+				});
+				throw new Error(ErrorMsg);
+			}
+
+			const now = DateTime.now();
+			const LastEndDate = DateTime.fromISO(LastEnd);
+			let ErrorMsg = "";
+			if (LastEndDate < now) {
+				ErrorMsg = "Entry provided for LastEnd in the past. LastEnd: " + LastEnd;
+			}
+
+			const diff = LastEndDate.toMillis() - now.toMillis();
+			const diff_hours = Math.floor(diff / (1000 * 60 * 60));
+			if (now.hour < 14 && diff_hours + now.hour > 23) {
+				ErrorMsg =
+					"LastEnd too far in future - price data for tomorrow only available after 1pm today. LastEnd: " +
+					LastEnd;
+			}
+
+			if (diff_hours + now.hour > 47) {
+				ErrorMsg =
+					"LastEnd to far in future - price data only available until tomorrow midnight. LastEnd: " + LastEnd;
+			}
+
+			if (now.plus({ hours: duration }) >= LastEndDate) {
+				ErrorMsg = "LastEnd too soon for given duration. LastEnd: " + LastEnd + ", duration: " + duration;
+			}
+			if (ErrorMsg !== "") {
+				this.log.error(ErrorMsg);
+				await this.setStateAsync(namespaceWithHomeId + ".Calculations.Feedback", {
+					val: "Error: " + ErrorMsg,
+					ack: true,
+				});
+				throw new Error(ErrorMsg);
+			}
+
+			const prices = await this.get_prices(namespaceWithHomeId, LastEndDate);
+
+			this.log.debug("prices : " + JSON.stringify(prices));
+
+			const prices_sorted = prices.slice().sort(this.sortPriceAtByTotal(1));
+			this.log.debug("prices sorted : " + JSON.stringify(prices));
+
+			return prices_sorted
+				.slice(0, duration)
+				.map(({ startsAt }) => startsAt)
+				.sort(this.sortByDateTime(1));
+		} catch (error: any) {
+			error = "error during calculation of best hours: " + error;
+			this.log.error(error);
+			throw new Error(error);
+		}
+	}
+
+	private async get_prices(namespaceWithHomeId: string, LastEndDate: DateTime): Promise<PriceAt[]> {
+		const now = DateTime.now();
+		const current_hour = now.hour;
+		const maxHour = LastEndDate.hour + 24 * (LastEndDate.day - now.day);
+		this.log.silly("maxHour " + maxHour);
+
+		const prices: PriceAt[] = [];
+
+		for (let i = current_hour + 1; i < Math.min(maxHour, 24); i++) {
+			this.log.silly("using today." + i);
+			const [total, startsAt] = await Promise.all([
+				this.getStateAsync(namespaceWithHomeId + ".PricesToday." + i + ".total"),
+				this.getStateAsync(namespaceWithHomeId + ".PricesToday." + i + ".startsAt"),
+			]);
+
+			this.log.silly("total." + i + ": " + JSON.stringify(total));
+			this.log.silly("startAt." + i + ": " + JSON.stringify(startsAt));
+
+			if (total?.val && startsAt?.val)
+				prices.push({
+					total: Number(total.val),
+					startsAt: DateTime.fromISO(String(startsAt.val)),
+				});
+		}
+		if (maxHour >= 24) {
+			for (let i = 0; i < maxHour - 24; i++) {
+				const [total, startsAt] = await Promise.all([
+					this.getStateAsync(namespaceWithHomeId + ".PricesTomorrow." + i + ".total"),
+					this.getStateAsync(namespaceWithHomeId + ".PricesTomorrow." + i + ".startsAt"),
+				]);
+
+				this.log.silly("tomorrow." + i + ": " + JSON.stringify(total));
+				this.log.silly("startAt." + i + ": " + JSON.stringify(startsAt));
+
+				if (total?.val && startsAt?.val) {
+					const startAt = DateTime.fromISO(String(startsAt.val));
+					if (startAt.toMillis() > now.toMillis() && startAt.toMillis() < LastEndDate.toMillis()) {
+						this.log.silly("using tomorrow." + i);
+						prices.push({
+							total: Number(total.val),
+							startsAt: DateTime.fromISO(String(startsAt.val)),
+						});
+					}
+				}
+			}
+		}
+		return prices;
 	}
 
 	private async checkAndSetStateStringFromAPI(name: string, value: string, displayName: string): Promise<void> {
@@ -271,7 +478,7 @@ class Tibberconnect extends utils.Adapter {
 				native: {},
 			});
 
-			await this.setStateAsync(name, value);
+			await this.setStateAsync(name, value, true);
 		}
 	}
 
@@ -289,7 +496,7 @@ class Tibberconnect extends utils.Adapter {
 				native: {},
 			});
 
-			await this.setStateAsync(name, value);
+			await this.setStateAsync(name, value, true);
 		}
 	}
 
@@ -306,7 +513,7 @@ class Tibberconnect extends utils.Adapter {
 			native: {},
 		});
 
-		await this.setStateAsync(name, value);
+		await this.setStateAsync(name, value, true);
 	}
 }
 
