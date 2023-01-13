@@ -1,5 +1,5 @@
-import { TibberFeed, IConfig, TibberQuery } from "tibber-api";
 import * as utils from "@iobroker/adapter-core";
+import { IConfig, TibberFeed, TibberQuery } from "tibber-api";
 import { ILiveMeasurement } from "tibber-api/lib/src/models/ILiveMeasurement";
 import { TibberHelper } from "./tibberHelper";
 
@@ -8,6 +8,7 @@ export class TibberPulse extends TibberHelper {
 	tibberQuery: TibberQuery;
 	tibberFeed: TibberFeed;
 	httpQueryUrl: string;
+	private reconnectionInterval?: ioBroker.Interval;
 
 	constructor(tibberConfig: IConfig, adapter: utils.AdapterInstance) {
 		super(adapter);
@@ -27,7 +28,6 @@ export class TibberPulse extends TibberHelper {
 			}
 			this.adapter.log.debug("Ermittle Websocket URL für TibberFeed");
 			this.tibberQuery.getWebsocketSubscriptionUrl().then((url) => {
-				this.tibberConfig.apiEndpoint.queryUrl = url.href;
 				this.adapter.log.debug("Websocket URL ermittelt: " + url.href);
 			});
 			this.tibberFeed.connect();
@@ -209,14 +209,19 @@ export class TibberPulse extends TibberHelper {
 	}
 
 	private reconnect(): void {
-		const reconnectionInterval = this.adapter.setInterval(() => {
-			if (!this.tibberFeed.connected) {
-				this.adapter.log.debug("Try reconnecting now!");
-				this.ConnectPulseStream();
-			} else {
-				this.adapter.log.debug("Reconnect successful! Interval not necessary.");
-				this.adapter.clearInterval(reconnectionInterval);
-			}
-		}, 5000);
+		if (!this.reconnectionInterval) {
+			this.reconnectionInterval = this.adapter.setInterval(() => {
+				if (!this.tibberFeed.connected) {
+					this.adapter.log.debug("Try reconnecting now!");
+					this.ConnectPulseStream();
+				} else {
+					this.adapter.log.debug("Reconnect successful! Interval not necessary.");
+					if (this.reconnectionInterval) {
+						this.adapter.clearInterval(this.reconnectionInterval);
+						this.reconnectionInterval = undefined;
+					}
+				}
+			}, 5000);
+		}
 	}
 }

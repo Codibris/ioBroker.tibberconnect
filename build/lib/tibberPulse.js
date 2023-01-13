@@ -21,7 +21,6 @@ class TibberPulse extends tibberHelper_1.TibberHelper {
             }
             this.adapter.log.debug("Ermittle Websocket URL für TibberFeed");
             this.tibberQuery.getWebsocketSubscriptionUrl().then((url) => {
-                this.tibberConfig.apiEndpoint.queryUrl = url.href;
                 this.adapter.log.debug("Websocket URL ermittelt: " + url.href);
             });
             this.tibberFeed.connect();
@@ -95,16 +94,21 @@ class TibberPulse extends tibberHelper_1.TibberHelper {
         }
     }
     reconnect() {
-        const reconnectionInterval = this.adapter.setInterval(() => {
-            if (!this.tibberFeed.connected) {
-                this.adapter.log.debug("Try reconnecting now!");
-                this.ConnectPulseStream();
-            }
-            else {
-                this.adapter.log.debug("Reconnect successful! Interval not necessary.");
-                this.adapter.clearInterval(reconnectionInterval);
-            }
-        }, 5000);
+        if (!this.reconnectionInterval) {
+            this.reconnectionInterval = this.adapter.setInterval(() => {
+                if (!this.tibberFeed.connected) {
+                    this.adapter.log.debug("Try reconnecting now!");
+                    this.ConnectPulseStream();
+                }
+                else {
+                    this.adapter.log.debug("Reconnect successful! Interval not necessary.");
+                    if (this.reconnectionInterval) {
+                        this.adapter.clearInterval(this.reconnectionInterval);
+                        this.reconnectionInterval = undefined;
+                    }
+                }
+            }, 5000);
+        }
     }
 }
 exports.TibberPulse = TibberPulse;
