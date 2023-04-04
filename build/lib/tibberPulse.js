@@ -23,8 +23,9 @@ class TibberPulse extends tibberHelper_1.TibberHelper {
             this.tibberQuery.getWebsocketSubscriptionUrl().then((url) => {
                 this.tibberConfig.apiEndpoint.queryUrl = url.href;
                 this.adapter.log.debug("Websocket URL ermittelt: " + url.href);
+                this.tibberFeed.connect();
+                this.adapter.log.debug("Feed connected!");
             });
-            this.tibberFeed.connect();
         }
         catch (e) {
             this.adapter.log.warn("Error on connect Feed:" + e.message);
@@ -57,7 +58,7 @@ class TibberPulse extends tibberHelper_1.TibberHelper {
         });
         // Add Error Handler on connection
         currentFeed.on("error", (e) => {
-            this.adapter.log.error('Error in Tibber Feed on "' + e[0]["path"] + '" with message "' + e[0]["message"] + '"');
+            this.adapter.log.error("ERROR on Tibber-Feed: " + e.toString());
         });
         // Add data receiver
         currentFeed.on("data", (data) => {
