@@ -1,3 +1,5 @@
-chore: release v0.0.6
+chore: release v0.0.9
 
-- quick temp. implementation of new tibber api Package
+- try automatically reconnecting websocket connection (pulse data) in 5s interval
+- add some technical improvements on api calls
+- add some debug logs

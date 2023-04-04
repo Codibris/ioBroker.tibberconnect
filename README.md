@@ -22,6 +22,11 @@ https://invite.tibber.com/hgg53izs
 connects tibber API and ioBroker
 
 ## Changelog
+### **WORK IN PROGRESS**
+- check current issues and update packages
+- fixed issue #181 'Error in Tibber Feed on "undefined" with message "undefined"'
+- fixed issue #130 pulse stream is not working
+
 ### 0.0.9 (2022-12-10)
 - try automatically reconnecting websocket connection (pulse data) in 5s interval
 - add some technical improvements on api calls
@@ -38,11 +43,9 @@ connects tibber API and ioBroker
 - quick temp. implementation of new tibber api Package
 
 ### 0.0.3 (2022-02-27)
-
 - get prices of today and tomorrow
 
 ### 0.0.2 (2022-02-26)
-
 - switch from schedule to deamon
 - Load current energy price on 5 min interval
 - optimize structure and internal objects
@@ -50,7 +53,6 @@ connects tibber API and ioBroker
 - configurate fields for tibber pulse feed
 
 ### 0.0.1 (2022-02-18)
-
 Reading data from tibber API:
 
 - list and details of homes
