@@ -22,7 +22,7 @@ https://invite.tibber.com/hgg53izs
 connects tibber API and ioBroker
 
 ## Changelog
-### **WORK IN PROGRESS**
+### 0.0.10 (2023-04-04)
 - check current issues and update packages
 - fixed issue #181 'Error in Tibber Feed on "undefined" with message "undefined"'
 - fixed issue #130 pulse stream is not working
