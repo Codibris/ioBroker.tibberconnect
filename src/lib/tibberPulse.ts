@@ -2,7 +2,6 @@ import { TibberFeed, IConfig, TibberQuery } from "tibber-api";
 import * as utils from "@iobroker/adapter-core";
 import { ILiveMeasurement } from "tibber-api/lib/src/models/ILiveMeasurement";
 import { TibberHelper } from "./tibberHelper";
-import { json } from "stream/consumers";
 
 export class TibberPulse extends TibberHelper {
 	tibberConfig: IConfig;
@@ -49,7 +48,7 @@ export class TibberPulse extends TibberHelper {
 		this.tibberFeed = new TibberFeed(new TibberQuery(this.tibberConfig));
 	}
 
-	private addEventHandlerOnFeed(currentFeed: TibberFeed) {
+	private addEventHandlerOnFeed(currentFeed: TibberFeed): void {
 		// Set info.connection state
 		currentFeed.on("connected", (data) => {
 			this.adapter.log.debug("Tibber Feed: " + data.toString());
