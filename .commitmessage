@@ -1,5 +1,5 @@
-chore: release v0.0.9
+chore: release v0.0.10
 
-- try automatically reconnecting websocket connection (pulse data) in 5s interval
-- add some technical improvements on api calls
-- add some debug logs
+- check current issues and update packages
+- fixed issue #181 'Error in Tibber Feed on "undefined" with message "undefined"'
+- fixed issue #130 pulse stream is not working

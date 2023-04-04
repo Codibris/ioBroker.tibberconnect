@@ -1,7 +1,7 @@
 {
 	"common": {
 		"name": "tibberconnect",
-		"version": "0.0.9",
+		"version": "0.0.10",
 		"news": {
 			"0.0.1": {
 				"en": "initial release",
@@ -38,6 +38,10 @@
 			"0.0.9": {
 				"en": "Automatische Neuverbindung im 5 Sek Interval (Pulse), wenn Verbindung unterbrochen wurde",
 				"de": "try automatically reconnecting websocket connection (pulse data) in 5s interval"
+			},
+			"0.0.10": {
+				"en": "fixed tibber pulse data stream",
+				"de": "Daten des Tibber Pulse werden wieder ausgelesen."
 			}
 		},
 		"title": "Tibber Connect",
