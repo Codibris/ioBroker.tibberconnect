@@ -20,18 +20,7 @@ export class TibberPulse extends TibberHelper {
 
 	ConnectPulseStream(): void {
 		try {
-			const currentUrl = new URL(this.tibberConfig.apiEndpoint.queryUrl);
-			// reset Query URL if protocol is not "http" (websocket url already set - needed for auto reconnect)
-			if (currentUrl.protocol != "http") {
-				this.tibberConfig.apiEndpoint.queryUrl = this.httpQueryUrl;
-			}
-			this.adapter.log.debug("Ermittle Websocket URL für TibberFeed");
-			this.tibberQuery.getWebsocketSubscriptionUrl().then((url) => {
-				this.tibberConfig.apiEndpoint.queryUrl = url.href;
-				this.adapter.log.debug("Websocket URL ermittelt: " + url.href);
-				this.tibberFeed.connect();
-				this.adapter.log.debug("Feed connected!");
-			});
+			this.tibberFeed.connect();
 		} catch (e) {
 			this.adapter.log.warn("Error on connect Feed:" + (e as Error).message);
 		}
