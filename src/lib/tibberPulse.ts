@@ -2,6 +2,7 @@ import { TibberFeed, IConfig, TibberQuery } from "tibber-api";
 import * as utils from "@iobroker/adapter-core";
 import { ILiveMeasurement } from "tibber-api/lib/src/models/ILiveMeasurement";
 import { TibberHelper } from "./tibberHelper";
+import { json } from "stream/consumers";
 
 export class TibberPulse extends TibberHelper {
 	tibberConfig: IConfig;
@@ -29,8 +30,9 @@ export class TibberPulse extends TibberHelper {
 			this.tibberQuery.getWebsocketSubscriptionUrl().then((url) => {
 				this.tibberConfig.apiEndpoint.queryUrl = url.href;
 				this.adapter.log.debug("Websocket URL ermittelt: " + url.href);
+				this.tibberFeed.connect();
+				this.adapter.log.debug("Feed connected!");
 			});
-			this.tibberFeed.connect();
 		} catch (e) {
 			this.adapter.log.warn("Error on connect Feed:" + (e as Error).message);
 		}
@@ -66,9 +68,7 @@ export class TibberPulse extends TibberHelper {
 
 		// Add Error Handler on connection
 		currentFeed.on("error", (e) => {
-			this.adapter.log.error(
-				'Error in Tibber Feed on "' + e[0]["path"] + '" with message "' + e[0]["message"] + '"',
-			);
+			this.adapter.log.error("ERROR on Tibber-Feed: " + e.toString());
 		});
 
 		// Add data receiver
