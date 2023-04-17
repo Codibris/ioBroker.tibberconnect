@@ -67,10 +67,11 @@
 			"it": "collega l'API di tibber e ioBroker",
 			"es": "conecta la API de tibber y ioBroker",
 			"pl": "łączy tibber API i ioBroker",
+			"uk": "підключає tibber API і ioBroker",
 			"zh-cn": "连接 tibber API 和 ioBroker"
 		},
 		"authors": ["Codibris <email@codibris.de>"],
-		"keywords": ["Strom", "Energie", "Energieversorger", "Stromversorger", "Tibber", "smart hom"],
+		"keywords": ["Strom", "Energie", "Energieversorger", "Stromversorger", "Tibber", "smart home"],
 		"license": "GPL-3.0",
 		"platform": "Javascript/Node.js",
 		"main": "build/main.js",
