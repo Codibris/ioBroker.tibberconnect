@@ -44,7 +44,6 @@
 				"de": "Daten des Tibber Pulse werden wieder ausgelesen."
 			}
 		},
-		"title": "Tibber Connect",
 		"titleLang": {
 			"en": "Tibber Connect",
 			"de": "Tibber Connect",
@@ -55,6 +54,7 @@
 			"it": "Tibber Connect",
 			"es": "Conectar Tibber",
 			"pl": "Połącz Tibbera",
+			"uk": "Роз'єм Tibber",
 			"zh-cn": "提伯连接"
 		},
 		"desc": {
