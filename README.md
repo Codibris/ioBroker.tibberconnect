@@ -68,4 +68,4 @@ Reading data from tibber API:
 GNU GENERAL PUBLIC LICENSE
 Version 3, 29 June 2007
 
-Copyright (c) 2022 Codibris <email@codibris.de>
+Copyright (c) 2023 Codibris <email@codibris.de>
