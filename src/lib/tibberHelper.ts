@@ -29,7 +29,7 @@ export class TibberHelper {
 					role: "String",
 					desc: description,
 					read: true,
-					write: true,
+					write: false,
 				},
 				native: {},
 			});
@@ -52,7 +52,7 @@ export class TibberHelper {
 					role: "Number",
 					desc: description,
 					read: true,
-					write: true,
+					write: false,
 				},
 				native: {},
 			});
@@ -75,7 +75,7 @@ export class TibberHelper {
 					role: "Boolean",
 					desc: description,
 					read: true,
-					write: true,
+					write: false,
 				},
 				native: {},
 			});
