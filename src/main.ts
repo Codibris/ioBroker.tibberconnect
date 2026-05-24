@@ -93,34 +93,54 @@ class Tibberconnect extends utils.Adapter {
 					}
 				}
 			}
+			// Re-entrancy guards: if the previous API run is still in flight (e.g. slow Tibber API,
+			// network stall), skip this tick instead of stacking parallel calls that hammer the API.
+			let currentPriceUpdateRunning = false;
 			const energyPriceCallIntervall = this.setInterval(async () => {
-				if (this.homeIdList.length > 0) {
-					for (const index in this.homeIdList) {
+				if (currentPriceUpdateRunning) {
+					this.log.debug("Skipping price update – previous run still in progress");
+					return;
+				}
+				if (this.homeIdList.length === 0) return;
+				currentPriceUpdateRunning = true;
+				try {
+					for (const homeId of this.homeIdList) {
 						try {
-							await tibberAPICaller.updateCurrentPrice(this.homeIdList[index]);
+							await tibberAPICaller.updateCurrentPrice(homeId);
 						} catch (error: any) {
 							this.log.warn(tibberAPICaller.generateErrorMessage(error, "Abruf 'Aktueller Preis'"));
 						}
 					}
+				} finally {
+					currentPriceUpdateRunning = false;
 				}
 			}, 300000);
 			this.intervallList.push(energyPriceCallIntervall);
 
+			let pricesListUpdateRunning = false;
 			const energyPricesListUpdateInterval = this.setInterval(async () => {
-				if (this.homeIdList.length > 0) {
-					for (const index in this.homeIdList) {
+				if (pricesListUpdateRunning) {
+					this.log.debug("Skipping prices list update – previous run still in progress");
+					return;
+				}
+				if (this.homeIdList.length === 0) return;
+				pricesListUpdateRunning = true;
+				try {
+					for (const homeId of this.homeIdList) {
 						try {
-							await tibberAPICaller.updatePricesToday(this.homeIdList[index]);
+							await tibberAPICaller.updatePricesToday(homeId);
 						} catch (error: any) {
 							this.log.warn(tibberAPICaller.generateErrorMessage(error, "Abruf 'Preise von heute'"));
 						}
 
 						try {
-							await tibberAPICaller.updatePricesTomorrow(this.homeIdList[index]);
+							await tibberAPICaller.updatePricesTomorrow(homeId);
 						} catch (error: any) {
 							this.log.warn(tibberAPICaller.generateErrorMessage(error, "Abruf 'Preise von morgen'"));
 						}
 					}
+				} finally {
+					pricesListUpdateRunning = false;
 				}
 			}, 300000);
 			this.intervallList.push(energyPricesListUpdateInterval);

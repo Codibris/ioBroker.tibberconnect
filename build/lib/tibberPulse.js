@@ -28,8 +28,11 @@ class TibberPulse extends tibberHelper_1.TibberHelper {
         catch (e) {
             this.adapter.log.warn("Error on Feed close: " + e.message);
         }
-        // reinit Tibberfeed
+        // Reinit Tibberfeed so the instance can be reconnected if needed.
+        // The event handlers MUST be re-attached – without that step the new feed
+        // would never deliver connected/disconnected/data events to the adapter.
         this.tibberFeed = new tibber_api_1.TibberFeed(new tibber_api_1.TibberQuery(this.tibberConfig));
+        this.addEventHandlerOnFeed(this.tibberFeed);
     }
     clearReconnectInterval() {
         if (this.reconnectInterval) {
