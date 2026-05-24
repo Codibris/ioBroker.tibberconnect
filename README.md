@@ -2,6 +2,24 @@
 
 # ioBroker.tibberconnect
 
+> # ⚠️ Hinweis: Dieser Adapter wird nicht mehr aktiv weiterentwickelt
+>
+> Während dieser Adapter in einer langen Pause war, ist mit **[ioBroker.tibberlink](https://github.com/hombach/ioBroker.tibberlink)** ein vollwertiger Nachfolger entstanden, der bereits im **offiziellen ioBroker-Repository** verfügbar ist und deutlich mehr kann:
+>
+> - direkter lokaler Zugriff auf den Tibber Pulse (nicht nur über die Cloud)
+> - historische Verbrauchsdaten
+> - Calculator-Channels für günstigste Stunden / Stundenblöcke / Best-Cost-Regeln
+> - "Smart Battery Buffer"-Logik für Heimspeicher
+> - JSON-Output für FlexCharts / eCharts
+>
+> **Für Neueinsteiger:** Bitte direkt [`tibberlink`](https://www.iobroker.net/#en/adapters/adapterref/iobroker.tibberlink/README.md) installieren.
+>
+> **Für Bestandsnutzer von `tibberconnect`:** Die hier veröffentlichte **v0.1.0** behebt die hartnäckigsten Stabilitätsprobleme (Crashes alle 30 Min, `power = 0` wurde verschluckt, Multi-Home-Konflikte, gelber `info.connection`-Status) und ist als Übergangs-Release gedacht. Geplant sind keine weiteren Feature-Releases — nur noch Sicherheits-Fixes, falls nötig. Mittelfristig zu `tibberlink` migrieren.
+>
+> Großen Dank an [@hombach](https://github.com/hombach) für das tolle Nachfolge-Werk. 🙏
+
+---
+
 ![![NPM version](https://img.shields.io/npm/v/iobroker.tibberconnect.svg)](https://www.npmjs.com/package/iobroker.tibberconnect)
 ![![Downloads](https://img.shields.io/npm/dm/iobroker.tibberconnect.svg)](https://www.npmjs.com/package/iobroker.tibberconnect)
 ![Number of Installations](https://iobroker.live/badges/tibberconnect-installed.svg)
