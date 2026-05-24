@@ -56,40 +56,50 @@ class TibberPulse extends tibberHelper_1.TibberHelper {
         currentFeed.on("error", (e) => {
             this.adapter.log.error("ERROR on Tibber-Feed: " + e.toString());
         });
-        // Add data receiver
+        // Add data receiver. The handler itself is sync (EventEmitter contract),
+        // so explicitly catch any rejection from the async pipeline to avoid
+        // unhandled promise rejections terminating the adapter.
         currentFeed.on("data", (data) => {
             const receivedData = data;
-            this.fetchLiveMeasurement("LiveMeasurement", receivedData);
+            this.fetchLiveMeasurement("LiveMeasurement", receivedData).catch((e) => {
+                this.adapter.log.warn("Error while processing Tibber live measurement: " + e.message);
+            });
         });
     }
-    fetchLiveMeasurement(objectDestination, liveMeasurement) {
-        if (this.tibberConfig.homeId !== undefined) {
-            this.checkAndSetValue(this.getStatePrefix(this.tibberConfig.homeId, objectDestination, "timestamp"), liveMeasurement.timestamp, "Timestamp when usage occurred");
-            this.checkAndSetValueNumber(this.getStatePrefix(this.tibberConfig.homeId, objectDestination, "power"), liveMeasurement.power, "Consumption at the moment (Watt)");
-            this.checkAndSetValueNumber(this.getStatePrefix(this.tibberConfig.homeId, objectDestination, "lastMeterConsumption"), liveMeasurement.lastMeterConsumption, "Last meter active import register state (kWh)");
-            this.checkAndSetValueNumber(this.getStatePrefix(this.tibberConfig.homeId, objectDestination, "accumulatedConsumption"), liveMeasurement.accumulatedConsumption, "kWh consumed since midnight");
-            this.checkAndSetValueNumber(this.getStatePrefix(this.tibberConfig.homeId, objectDestination, "accumulatedProduction"), liveMeasurement.accumulatedProduction, "net kWh produced since midnight");
-            this.checkAndSetValueNumber(this.getStatePrefix(this.tibberConfig.homeId, objectDestination, "accumulatedConsumptionLastHour"), liveMeasurement.accumulatedConsumptionLastHour, "kWh consumed since since last hour shift");
-            this.checkAndSetValueNumber(this.getStatePrefix(this.tibberConfig.homeId, objectDestination, "accumulatedProductionLastHour"), liveMeasurement.accumulatedProductionLastHour, "net kWh produced since last hour shift");
-            this.checkAndSetValueNumber(this.getStatePrefix(this.tibberConfig.homeId, objectDestination, "accumulatedCost"), liveMeasurement.accumulatedCost, "Accumulated cost since midnight; requires active Tibber power deal");
-            this.checkAndSetValueNumber(this.getStatePrefix(this.tibberConfig.homeId, objectDestination, "accumulatedReward"), liveMeasurement.accumulatedReward, "Accumulated reward since midnight; requires active Tibber power deal");
-            this.checkAndSetValue(this.getStatePrefix(this.tibberConfig.homeId, objectDestination, "currency"), liveMeasurement.currency, "Currency of displayed cost; requires active Tibber power deal");
-            this.checkAndSetValueNumber(this.getStatePrefix(this.tibberConfig.homeId, objectDestination, "minPower"), liveMeasurement.minPower, "Min consumption since midnight (Watt)");
-            this.checkAndSetValueNumber(this.getStatePrefix(this.tibberConfig.homeId, objectDestination, "averagePower"), liveMeasurement.averagePower, "Average consumption since midnight (Watt)");
-            this.checkAndSetValueNumber(this.getStatePrefix(this.tibberConfig.homeId, objectDestination, "maxPower"), liveMeasurement.maxPower, "Peak consumption since midnight (Watt)");
-            this.checkAndSetValueNumber(this.getStatePrefix(this.tibberConfig.homeId, objectDestination, "powerProduction"), liveMeasurement.powerProduction, "Net production (A-) at the moment (Watt)");
-            this.checkAndSetValueNumber(this.getStatePrefix(this.tibberConfig.homeId, objectDestination, "minPowerProduction"), liveMeasurement.minPowerProduction, "Min net production since midnight (Watt)");
-            this.checkAndSetValueNumber(this.getStatePrefix(this.tibberConfig.homeId, objectDestination, "maxPowerProduction"), liveMeasurement.maxPowerProduction, "Max net production since midnight (Watt)");
-            this.checkAndSetValueNumber(this.getStatePrefix(this.tibberConfig.homeId, objectDestination, "lastMeterProduction"), liveMeasurement.lastMeterProduction, "Last meter active export register state (kWh)");
-            this.checkAndSetValueNumber(this.getStatePrefix(this.tibberConfig.homeId, objectDestination, "powerFactor"), liveMeasurement.powerFactor, "Power factor (active power / apparent power)");
-            this.checkAndSetValueNumber(this.getStatePrefix(this.tibberConfig.homeId, objectDestination, "voltagePhase1"), liveMeasurement.voltagePhase1, "Voltage on phase 1; on Kaifa and Aidon meters the value is not part of every HAN data frame therefore the value is null at timestamps with second value other than 0, 10, 20, 30, 40, 50. There can be other deviations based on concrete meter firmware.");
-            this.checkAndSetValueNumber(this.getStatePrefix(this.tibberConfig.homeId, objectDestination, "voltagePhase2"), liveMeasurement.voltagePhase2, "Voltage on phase 2; on Kaifa and Aidon meters the value is not part of every HAN data frame therefore the value is null at timestamps with second value other than 0, 10, 20, 30, 40, 50. There can be other deviations based on concrete meter firmware.");
-            this.checkAndSetValueNumber(this.getStatePrefix(this.tibberConfig.homeId, objectDestination, "voltagePhase3"), liveMeasurement.voltagePhase3, "Voltage on phase 3; on Kaifa and Aidon meters the value is not part of every HAN data frame therefore the value is null at timestamps with second value other than 0, 10, 20, 30, 40, 50. There can be other deviations based on concrete meter firmware.");
-            this.checkAndSetValueNumber(this.getStatePrefix(this.tibberConfig.homeId, objectDestination, "currentL1"), liveMeasurement.currentL1, "Current on L1; on Kaifa and Aidon meters the value is not part of every HAN data frame therefore the value is null at timestamps with second value other than 0, 10, 20, 30, 40, 50. There can be other deviations based on concrete meter firmware.");
-            this.checkAndSetValueNumber(this.getStatePrefix(this.tibberConfig.homeId, objectDestination, "currentL2"), liveMeasurement.currentL2, "Current on L2; on Kaifa and Aidon meters the value is not part of every HAN data frame therefore the value is null at timestamps with second value other than 0, 10, 20, 30, 40, 50. There can be other deviations based on concrete meter firmware.");
-            this.checkAndSetValueNumber(this.getStatePrefix(this.tibberConfig.homeId, objectDestination, "currentL3"), liveMeasurement.currentL3, "Current on L3; on Kaifa and Aidon meters the value is not part of every HAN data frame therefore the value is null at timestamps with second value other than 0, 10, 20, 30, 40, 50. There can be other deviations based on concrete meter firmware.");
-            this.checkAndSetValueNumber(this.getStatePrefix(this.tibberConfig.homeId, objectDestination, "signalStrength"), liveMeasurement.signalStrength, "Device signal strength (Pulse - dB; Watty - percent)");
-        }
+    async fetchLiveMeasurement(objectDestination, liveMeasurement) {
+        if (this.tibberConfig.homeId === undefined)
+            return;
+        const homeId = this.tibberConfig.homeId;
+        // Run all state writes concurrently – at the same time we guarantee that
+        // every rejection is captured by Promise.all and surfaced to the caller's
+        // .catch() handler instead of becoming an unhandled rejection.
+        await Promise.all([
+            this.checkAndSetValue(this.getStatePrefix(homeId, objectDestination, "timestamp"), liveMeasurement.timestamp, "Timestamp when usage occurred"),
+            this.checkAndSetValueNumber(this.getStatePrefix(homeId, objectDestination, "power"), liveMeasurement.power, "Consumption at the moment (Watt)"),
+            this.checkAndSetValueNumber(this.getStatePrefix(homeId, objectDestination, "lastMeterConsumption"), liveMeasurement.lastMeterConsumption, "Last meter active import register state (kWh)"),
+            this.checkAndSetValueNumber(this.getStatePrefix(homeId, objectDestination, "accumulatedConsumption"), liveMeasurement.accumulatedConsumption, "kWh consumed since midnight"),
+            this.checkAndSetValueNumber(this.getStatePrefix(homeId, objectDestination, "accumulatedProduction"), liveMeasurement.accumulatedProduction, "net kWh produced since midnight"),
+            this.checkAndSetValueNumber(this.getStatePrefix(homeId, objectDestination, "accumulatedConsumptionLastHour"), liveMeasurement.accumulatedConsumptionLastHour, "kWh consumed since since last hour shift"),
+            this.checkAndSetValueNumber(this.getStatePrefix(homeId, objectDestination, "accumulatedProductionLastHour"), liveMeasurement.accumulatedProductionLastHour, "net kWh produced since last hour shift"),
+            this.checkAndSetValueNumber(this.getStatePrefix(homeId, objectDestination, "accumulatedCost"), liveMeasurement.accumulatedCost, "Accumulated cost since midnight; requires active Tibber power deal"),
+            this.checkAndSetValueNumber(this.getStatePrefix(homeId, objectDestination, "accumulatedReward"), liveMeasurement.accumulatedReward, "Accumulated reward since midnight; requires active Tibber power deal"),
+            this.checkAndSetValue(this.getStatePrefix(homeId, objectDestination, "currency"), liveMeasurement.currency, "Currency of displayed cost; requires active Tibber power deal"),
+            this.checkAndSetValueNumber(this.getStatePrefix(homeId, objectDestination, "minPower"), liveMeasurement.minPower, "Min consumption since midnight (Watt)"),
+            this.checkAndSetValueNumber(this.getStatePrefix(homeId, objectDestination, "averagePower"), liveMeasurement.averagePower, "Average consumption since midnight (Watt)"),
+            this.checkAndSetValueNumber(this.getStatePrefix(homeId, objectDestination, "maxPower"), liveMeasurement.maxPower, "Peak consumption since midnight (Watt)"),
+            this.checkAndSetValueNumber(this.getStatePrefix(homeId, objectDestination, "powerProduction"), liveMeasurement.powerProduction, "Net production (A-) at the moment (Watt)"),
+            this.checkAndSetValueNumber(this.getStatePrefix(homeId, objectDestination, "minPowerProduction"), liveMeasurement.minPowerProduction, "Min net production since midnight (Watt)"),
+            this.checkAndSetValueNumber(this.getStatePrefix(homeId, objectDestination, "maxPowerProduction"), liveMeasurement.maxPowerProduction, "Max net production since midnight (Watt)"),
+            this.checkAndSetValueNumber(this.getStatePrefix(homeId, objectDestination, "lastMeterProduction"), liveMeasurement.lastMeterProduction, "Last meter active export register state (kWh)"),
+            this.checkAndSetValueNumber(this.getStatePrefix(homeId, objectDestination, "powerFactor"), liveMeasurement.powerFactor, "Power factor (active power / apparent power)"),
+            this.checkAndSetValueNumber(this.getStatePrefix(homeId, objectDestination, "voltagePhase1"), liveMeasurement.voltagePhase1, "Voltage on phase 1; on Kaifa and Aidon meters the value is not part of every HAN data frame therefore the value is null at timestamps with second value other than 0, 10, 20, 30, 40, 50. There can be other deviations based on concrete meter firmware."),
+            this.checkAndSetValueNumber(this.getStatePrefix(homeId, objectDestination, "voltagePhase2"), liveMeasurement.voltagePhase2, "Voltage on phase 2; on Kaifa and Aidon meters the value is not part of every HAN data frame therefore the value is null at timestamps with second value other than 0, 10, 20, 30, 40, 50. There can be other deviations based on concrete meter firmware."),
+            this.checkAndSetValueNumber(this.getStatePrefix(homeId, objectDestination, "voltagePhase3"), liveMeasurement.voltagePhase3, "Voltage on phase 3; on Kaifa and Aidon meters the value is not part of every HAN data frame therefore the value is null at timestamps with second value other than 0, 10, 20, 30, 40, 50. There can be other deviations based on concrete meter firmware."),
+            this.checkAndSetValueNumber(this.getStatePrefix(homeId, objectDestination, "currentL1"), liveMeasurement.currentL1, "Current on L1; on Kaifa and Aidon meters the value is not part of every HAN data frame therefore the value is null at timestamps with second value other than 0, 10, 20, 30, 40, 50. There can be other deviations based on concrete meter firmware."),
+            this.checkAndSetValueNumber(this.getStatePrefix(homeId, objectDestination, "currentL2"), liveMeasurement.currentL2, "Current on L2; on Kaifa and Aidon meters the value is not part of every HAN data frame therefore the value is null at timestamps with second value other than 0, 10, 20, 30, 40, 50. There can be other deviations based on concrete meter firmware."),
+            this.checkAndSetValueNumber(this.getStatePrefix(homeId, objectDestination, "currentL3"), liveMeasurement.currentL3, "Current on L3; on Kaifa and Aidon meters the value is not part of every HAN data frame therefore the value is null at timestamps with second value other than 0, 10, 20, 30, 40, 50. There can be other deviations based on concrete meter firmware."),
+            this.checkAndSetValueNumber(this.getStatePrefix(homeId, objectDestination, "signalStrength"), liveMeasurement.signalStrength, "Device signal strength (Pulse - dB; Watty - percent)"),
+        ]);
     }
     reconnect() {
         // avoid stacking multiple reconnect intervals if disconnect fires repeatedly
