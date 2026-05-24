@@ -17,18 +17,25 @@ class TibberPulse extends tibberHelper_1.TibberHelper {
             this.tibberFeed.connect();
         }
         catch (e) {
-            this.adapter.log.warn("Error on connect Feed:" + e.message);
+            this.adapter.log.warn("Error on connect Feed: " + e.message);
         }
     }
     DisconnectPulseStream() {
+        this.clearReconnectInterval();
         try {
             this.tibberFeed.close();
         }
         catch (e) {
-            this.adapter.log.warn("Error on Feed closed:" + e.message);
+            this.adapter.log.warn("Error on Feed close: " + e.message);
         }
         // reinit Tibberfeed
         this.tibberFeed = new tibber_api_1.TibberFeed(new tibber_api_1.TibberQuery(this.tibberConfig));
+    }
+    clearReconnectInterval() {
+        if (this.reconnectInterval) {
+            this.adapter.clearInterval(this.reconnectInterval);
+            this.reconnectInterval = undefined;
+        }
     }
     addEventHandlerOnFeed(currentFeed) {
         // Set info.connection state
@@ -85,14 +92,17 @@ class TibberPulse extends tibberHelper_1.TibberHelper {
         }
     }
     reconnect() {
-        const reconnectionInterval = this.adapter.setInterval(() => {
+        // avoid stacking multiple reconnect intervals if disconnect fires repeatedly
+        if (this.reconnectInterval)
+            return;
+        this.reconnectInterval = this.adapter.setInterval(() => {
             if (!this.tibberFeed.connected) {
                 this.adapter.log.debug("Try reconnecting now!");
                 this.ConnectPulseStream();
             }
             else {
                 this.adapter.log.debug("Reconnect successful! Interval not necessary.");
-                this.adapter.clearInterval(reconnectionInterval);
+                this.clearReconnectInterval();
             }
         }, 5000);
     }

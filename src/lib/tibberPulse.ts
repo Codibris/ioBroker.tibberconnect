@@ -8,6 +8,7 @@ export class TibberPulse extends TibberHelper {
 	tibberQuery: TibberQuery;
 	tibberFeed: TibberFeed;
 	httpQueryUrl: string;
+	private reconnectInterval: ioBroker.Interval | undefined;
 
 	constructor(tibberConfig: IConfig, adapter: utils.AdapterInstance) {
 		super(adapter);
@@ -22,19 +23,27 @@ export class TibberPulse extends TibberHelper {
 		try {
 			this.tibberFeed.connect();
 		} catch (e) {
-			this.adapter.log.warn("Error on connect Feed:" + (e as Error).message);
+			this.adapter.log.warn("Error on connect Feed: " + (e as Error).message);
 		}
 	}
 
 	DisconnectPulseStream(): void {
+		this.clearReconnectInterval();
 		try {
 			this.tibberFeed.close();
 		} catch (e) {
-			this.adapter.log.warn("Error on Feed closed:" + (e as Error).message);
+			this.adapter.log.warn("Error on Feed close: " + (e as Error).message);
 		}
 
 		// reinit Tibberfeed
 		this.tibberFeed = new TibberFeed(new TibberQuery(this.tibberConfig));
+	}
+
+	private clearReconnectInterval(): void {
+		if (this.reconnectInterval) {
+			this.adapter.clearInterval(this.reconnectInterval);
+			this.reconnectInterval = undefined;
+		}
 	}
 
 	private addEventHandlerOnFeed(currentFeed: TibberFeed): void {
@@ -197,13 +206,15 @@ export class TibberPulse extends TibberHelper {
 	}
 
 	private reconnect(): void {
-		const reconnectionInterval = this.adapter.setInterval(() => {
+		// avoid stacking multiple reconnect intervals if disconnect fires repeatedly
+		if (this.reconnectInterval) return;
+		this.reconnectInterval = this.adapter.setInterval(() => {
 			if (!this.tibberFeed.connected) {
 				this.adapter.log.debug("Try reconnecting now!");
 				this.ConnectPulseStream();
 			} else {
 				this.adapter.log.debug("Reconnect successful! Interval not necessary.");
-				this.adapter.clearInterval(reconnectionInterval);
+				this.clearReconnectInterval();
 			}
 		}, 5000);
 	}

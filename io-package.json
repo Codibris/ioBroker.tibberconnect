@@ -1,8 +1,12 @@
 {
 	"common": {
 		"name": "tibberconnect",
-		"version": "0.0.10",
+		"version": "0.1.0",
 		"news": {
+			"0.1.0": {
+				"en": "Stability release: fix value=0 drop, accumulatedReward config typo, crash by unhandled promise in price interval, multi-home collisions, info.connection green state, defensive error messages",
+				"de": "Stabilitäts-Release: Fix für Wert=0/false-Bug, accumulatedReward Config-Tippfehler, Crash durch unhandled Promise im Preis-Intervall, Multi-Home-Kollisionen, info.connection grüner Status, robustere Fehlermeldungen"
+			},
 			"0.0.1": {
 				"en": "initial release",
 				"de": "Erstveröffentlichung"

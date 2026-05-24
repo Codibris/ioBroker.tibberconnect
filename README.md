@@ -22,6 +22,16 @@ https://invite.tibber.com/hgg53izs
 connects tibber API and ioBroker
 
 ## Changelog
+### 0.1.0 (2026-05-24) – Stability Release
+- fix: numeric/boolean states with value `0` or `false` are no longer dropped (e.g. `power`, `powerProduction`, `accumulatedConsumptionLastHour`, `signalStrength`) – issues #187, #200, #224
+- fix: `accumulatedReward` was only activated when `accumulatedCost` was enabled in admin (config key typo) – data loss for users with PV feed-in
+- fix: unhandled promise rejection in price-update intervals crashed the adapter every 30–60 min; intervals now `await` API calls and catch errors – issues #129, #93, #83, #209
+- fix: multi-home setups no longer collide on shared `homeId` state; every API call and Pulse feed gets its own home context – issue #221
+- fix: `info.connection` is now set to green as soon as the API returns the home list, independent of the Pulse feed state – forum #13, #20, #107
+- fix: `generateErrorMessage` no longer prints "undefined (undefined)" on network errors – forum #24
+- fix: Pulse reconnect interval is tracked per feed and cleared on adapter unload (no leaks, no double-stacking)
+- fix: defensive null-checks in `fetchPrice`, `fetchAddress`, `fetchLegalEntity`, `fetchContactInfo`
+
 ### 0.0.10 (2023-04-04)
 - check current issues and update packages
 - fixed issue #181 'Error in Tibber Feed on "undefined" with message "undefined"'
