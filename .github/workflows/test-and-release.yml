@@ -13,7 +13,23 @@ on:
       - "v[0-9]+.[0-9]+.[0-9]+-**"
   pull_request: {}
 
+# Cancel superseded runs for the same PR / branch to save CI minutes
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
 jobs:
+  # Reviews dependency updates on PRs and blocks merging high-severity CVEs
+  dependency-review:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/dependency-review-action@v4
+        with:
+          fail-on-severity: high
+          comment-summary-in-pr: on-failure
+
   # Performs quick checks before the expensive test runs
   check-and-lint:
     if: contains(github.event.head_commit.message, '[skip ci]') == false
@@ -23,7 +39,7 @@ jobs:
     steps:
       - uses: ioBroker/testing-action-check@v1
         with:
-          node-version: '14.x'
+          node-version: '20.x'
           # Uncomment the following line if your adapter cannot be installed using 'npm ci'
           # install-command: 'npm install'
           type-checking: true
@@ -35,9 +51,16 @@ jobs:
 
     runs-on: ${{ matrix.os }}
     strategy:
+      # Don't cancel all matrix jobs when one fails – we want full coverage
+      fail-fast: false
       matrix:
-        node-version: [14.x, 16.x, 18.x]
-        os: [ubuntu-latest, windows-latest, macos-latest]
+        node-version: [20.x, 22.x, 24.x]
+        # Windows is intentionally excluded: @iobroker/testing on windows-latest
+        # spends ~30 min in `npm install` of iobroker.js-controller native deps
+        # and times out. ioBroker is rarely deployed on Windows, and lint /
+        # type-check still cover the static code paths. Re-add when GH Actions
+        # Windows runners are fast enough again.
+        os: [ubuntu-latest, macos-latest]
 
     steps:
       - uses: ioBroker/testing-action-adapter@v1

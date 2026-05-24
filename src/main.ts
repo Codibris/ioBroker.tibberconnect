@@ -15,6 +15,7 @@ import { TibberPulse } from "./lib/tibberPulse";
 class Tibberconnect extends utils.Adapter {
 	intervallList: ioBroker.Interval[];
 	homeIdList: string[];
+	tibberPulseInstances: TibberPulse[];
 	queryUrl = "";
 
 	public constructor(options: Partial<utils.AdapterOptions> = {}) {
@@ -29,6 +30,7 @@ class Tibberconnect extends utils.Adapter {
 		this.on("unload", this.onUnload.bind(this));
 		this.homeIdList = [];
 		this.intervallList = [];
+		this.tibberPulseInstances = [];
 		this.queryUrl = "https://api.tibber.com/v1-beta/gql";
 	}
 
@@ -52,13 +54,6 @@ class Tibberconnect extends utils.Adapter {
 					queryUrl: this.queryUrl,
 				},
 			};
-			const tibberConfigFeed: IConfig = {
-				active: true,
-				apiEndpoint: {
-					apiKey: this.config.TibberAPIToken,
-					queryUrl: this.queryUrl,
-				},
-			};
 			// Now read all Data from API
 			const tibberAPICaller = new TibberAPICaller(tibberConfigAPI, this);
 			try {
@@ -66,19 +61,15 @@ class Tibberconnect extends utils.Adapter {
 			} catch (error: any) {
 				this.log.warn(tibberAPICaller.generateErrorMessage(error, "Abruf 'homes'"));
 			}
-			// if feed is not used - set info.connection if data received
-			if (!this.config.FeedActive) {
-				if (this.homeIdList) {
-					this.setState("info.connection", true, true);
-					this.log.debug(
-						"Connection Check: Feed not enabled and I received home list from api - good connection",
-					);
-				} else {
-					this.setState("info.connection", false, true);
-					this.log.debug(
-						"Connection Check: Feed not enabled and I do not get home list from api - bad connection",
-					);
-				}
+			// Set info.connection: green if API call returned at least one home.
+			// When FeedActive=true the Pulse 'connected' event may flip it to true later,
+			// but a successful API call is already a valid "connected to service" state.
+			if (this.homeIdList && this.homeIdList.length > 0) {
+				await this.setStateAsync("info.connection", true, true);
+				this.log.debug("Connection Check: home list received from api - good connection");
+			} else {
+				await this.setStateAsync("info.connection", false, true);
+				this.log.debug("Connection Check: no home list received from api - bad connection");
 			}
 			// Init Load Data for home
 			if (this.homeIdList.length > 0) {
@@ -102,34 +93,54 @@ class Tibberconnect extends utils.Adapter {
 					}
 				}
 			}
-			const energyPriceCallIntervall = this.setInterval(() => {
-				if (this.homeIdList.length > 0) {
-					for (const index in this.homeIdList) {
+			// Re-entrancy guards: if the previous API run is still in flight (e.g. slow Tibber API,
+			// network stall), skip this tick instead of stacking parallel calls that hammer the API.
+			let currentPriceUpdateRunning = false;
+			const energyPriceCallIntervall = this.setInterval(async () => {
+				if (currentPriceUpdateRunning) {
+					this.log.debug("Skipping price update – previous run still in progress");
+					return;
+				}
+				if (this.homeIdList.length === 0) return;
+				currentPriceUpdateRunning = true;
+				try {
+					for (const homeId of this.homeIdList) {
 						try {
-							tibberAPICaller.updateCurrentPrice(this.homeIdList[index]);
+							await tibberAPICaller.updateCurrentPrice(homeId);
 						} catch (error: any) {
 							this.log.warn(tibberAPICaller.generateErrorMessage(error, "Abruf 'Aktueller Preis'"));
 						}
 					}
+				} finally {
+					currentPriceUpdateRunning = false;
 				}
 			}, 300000);
 			this.intervallList.push(energyPriceCallIntervall);
 
-			const energyPricesListUpdateInterval = this.setInterval(() => {
-				if (this.homeIdList.length > 0) {
-					for (const index in this.homeIdList) {
+			let pricesListUpdateRunning = false;
+			const energyPricesListUpdateInterval = this.setInterval(async () => {
+				if (pricesListUpdateRunning) {
+					this.log.debug("Skipping prices list update – previous run still in progress");
+					return;
+				}
+				if (this.homeIdList.length === 0) return;
+				pricesListUpdateRunning = true;
+				try {
+					for (const homeId of this.homeIdList) {
 						try {
-							tibberAPICaller.updatePricesToday(this.homeIdList[index]);
+							await tibberAPICaller.updatePricesToday(homeId);
 						} catch (error: any) {
 							this.log.warn(tibberAPICaller.generateErrorMessage(error, "Abruf 'Preise von heute'"));
 						}
 
 						try {
-							tibberAPICaller.updatePricesTomorrow(this.homeIdList[index]);
+							await tibberAPICaller.updatePricesTomorrow(homeId);
 						} catch (error: any) {
 							this.log.warn(tibberAPICaller.generateErrorMessage(error, "Abruf 'Preise von morgen'"));
 						}
 					}
+				} finally {
+					pricesListUpdateRunning = false;
 				}
 			}, 300000);
 			this.intervallList.push(energyPricesListUpdateInterval);
@@ -138,7 +149,15 @@ class Tibberconnect extends utils.Adapter {
 			if (this.config.FeedActive) {
 				for (const index in this.homeIdList) {
 					try {
-						tibberConfigFeed.homeId = this.homeIdList[index];
+						// fresh Feed-Config per Home – verhindert geteilte Referenz bei mehreren Häusern
+						const tibberConfigFeed: IConfig = {
+							active: true,
+							apiEndpoint: {
+								apiKey: this.config.TibberAPIToken,
+								queryUrl: this.queryUrl,
+							},
+							homeId: this.homeIdList[index],
+						};
 						// define fields for Datafeed
 						tibberConfigFeed.timestamp = true;
 						tibberConfigFeed.power = true;
@@ -160,7 +179,7 @@ class Tibberconnect extends utils.Adapter {
 						if (this.config.FeedConfigAccumulatedCost) {
 							tibberConfigFeed.accumulatedCost = true;
 						}
-						if (this.config.FeedConfigAccumulatedCost) {
+						if (this.config.FeedConfigAccumulatedReward) {
 							tibberConfigFeed.accumulatedReward = true;
 						}
 						if (this.config.FeedConfigCurrency) {
@@ -212,6 +231,7 @@ class Tibberconnect extends utils.Adapter {
 							tibberConfigFeed.signalStrength = true;
 						}
 						const tibberPulse = new TibberPulse(tibberConfigFeed, this);
+						this.tibberPulseInstances.push(tibberPulse);
 						tibberPulse.ConnectPulseStream();
 					} catch (e) {
 						this.log.warn((e as Error).message);
@@ -226,13 +246,17 @@ class Tibberconnect extends utils.Adapter {
 	 */
 	private onUnload(callback: () => void): void {
 		try {
-			// Here you must clear all timeouts or intervals that may still be active
-			// clearTimeout(timeout1);
-			// clearTimeout(timeout2);
-			// ...
-			// clearInterval(interval1);
-			for (const index in this.intervallList) {
-				this.clearInterval(this.intervallList[index]);
+			// stop all running Pulse feeds (incl. their reconnect intervals)
+			for (const pulse of this.tibberPulseInstances) {
+				try {
+					pulse.DisconnectPulseStream();
+				} catch (e) {
+					this.log.debug("Error on Pulse disconnect during unload: " + (e as Error).message);
+				}
+			}
+
+			for (const interval of this.intervallList) {
+				this.clearInterval(interval);
 			}
 
 			// info.connect to false, if adapter is closed
